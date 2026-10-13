@@ -1,0 +1,2979 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#11151b">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<title>तासिका सूचक — सर्व शिक्षक</title>
+<style>
+  :root{
+    --bg: #11151b;
+    --panel: #1b212a;
+    --panel-2: #232b36;
+    --ink: #eef1f5;
+    --ink-dim: #8d99ab;
+    --line: #2c3540;
+
+    --class-bg1: #d8362b;
+    --class-bg2: #a4241d;
+    --class-text: #fff5f2;
+
+    --break-bg: #f2a93b;
+    --break-text: #241a05;
+
+    --duty-bg: #a561d8;
+    --duty-text: #fbf5ff;
+
+    --off-bg: #33404d;
+    --off-text: #cfd8e0;
+
+    --holiday-bg: #1e9e6d;
+    --holiday-text: #ecfff6;
+
+    --row-bg: #1a3c66;
+    --row-bg-2: #234d80;
+    --row-text: #ffd93d;
+    --row-time: #ffe27a;
+  }
+  *{box-sizing:border-box;}
+  html,body{ height:100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    color:var(--ink);
+    font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+    min-height:100vh;
+    padding-bottom:36px;
+  }
+  header{
+    text-align:center;
+    padding:22px 16px 6px;
+  }
+  header h1{
+    margin:0;
+    font-family:'Baloo 2', sans-serif;
+    font-size:1.4rem;
+    font-weight:800;
+    color:var(--ink);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+  }
+  header .sub{
+    color:var(--ink-dim);
+    font-size:0.82rem;
+    margin-top:4px;
+  }
+  .mode-toggle{
+    max-width:440px;
+    margin:16px auto 0;
+    padding:0 16px;
+    display:flex;
+    gap:8px;
+  }
+  .mode-btn{
+    flex:1;
+    padding:11px 10px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink-dim);
+    font-family:'Mukta', sans-serif;
+    font-size:0.92rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .mode-btn.active{
+    background: linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    color:var(--class-text);
+    border-color:transparent;
+  }
+  .teacher-picker{
+    max-width:440px;
+    margin:14px auto 0;
+    padding:0 16px;
+  }
+  .teacher-picker select{
+    width:100%;
+    padding:13px 14px;
+    border-radius:12px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-family:'Mukta', sans-serif;
+    font-size:1rem;
+    font-weight:600;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  .clock-row{
+    display:flex;
+    justify-content:center;
+    gap:16px;
+    margin:10px 0 0;
+    font-size:0.9rem;
+    color:var(--ink-dim);
+    font-variant-numeric: tabular-nums;
+  }
+  #fileWarning{
+    display:none;
+    max-width:440px;
+    margin:14px auto;
+    padding:12px 16px;
+    background:#3a2c0e;
+    border:1.5px solid var(--break-bg);
+    border-radius:10px;
+    color:#ffdf9b;
+    font-size:0.8rem;
+    line-height:1.5;
+  }
+  .status-card{
+    margin:18px auto 8px;
+    max-width:440px;
+    padding:28px 22px 20px;
+    border-radius:20px;
+    text-align:center;
+    min-height:190px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:4px;
+    background:var(--panel);
+    box-shadow:0 10px 30px rgba(0,0,0,0.35);
+    position:relative;
+    overflow:hidden;
+  }
+  .status-card.in-class{
+    background: linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    color:var(--class-text);
+    box-shadow:0 0 0 3px rgba(255,255,255,0.08), 0 14px 34px rgba(216,54,43,0.45);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ box-shadow:0 0 0 3px rgba(255,255,255,0.08), 0 14px 34px rgba(216,54,43,0.40); }
+    50%{ box-shadow:0 0 0 3px rgba(255,255,255,0.14), 0 18px 42px rgba(216,54,43,0.65); }
+  }
+  .status-card.break{ background:var(--break-bg); color:var(--break-text); }
+  .status-card.duty{ background:var(--duty-bg); color:var(--duty-text); }
+  .status-card.off{ background:var(--off-bg); color:var(--off-text); }
+  .status-card.holiday{ background:var(--holiday-bg); color:var(--holiday-text); }
+
+  .status-tag{
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.78rem;
+    letter-spacing:1.3px;
+    text-transform:uppercase;
+    opacity:0.85;
+  }
+  .status-main{
+    font-family:'Baloo 2', sans-serif;
+    font-size:2rem;
+    font-weight:800;
+    margin:6px 0 2px;
+    line-height:1.15;
+  }
+  .status-card.in-class .status-main{ font-size:2.5rem; }
+  .status-detail{
+    font-size:1.05rem;
+    font-weight:500;
+    opacity:0.95;
+  }
+  .status-time{
+    font-size:0.82rem;
+    opacity:0.8;
+    margin-top:6px;
+  }
+  .countdown{
+    font-family:'Baloo 2', sans-serif;
+    font-size:1.35rem;
+    font-weight:700;
+    margin-top:6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .next-strip{
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px solid rgba(255,255,255,0.25);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    font-size:1.05rem;
+    font-weight:600;
+    opacity:0.95;
+    text-align:center;
+    line-height:1.4;
+  }
+  .status-card:not(.in-class):not(.break):not(.duty):not(.holiday) .next-strip{
+    border-top-color: var(--line);
+  }
+  .next-strip .arrow{ font-size:1.2rem; }
+
+  .notif-box{
+    max-width:440px;
+    margin:16px auto 18px;
+    padding:0 16px;
+    text-align:center;
+  }
+  button{
+    background:var(--panel-2);
+    color:var(--ink);
+    border:1px solid var(--line);
+    padding:12px 22px;
+    border-radius:12px;
+    font-size:0.95rem;
+    font-weight:600;
+    cursor:pointer;
+    font-family:'Mukta', sans-serif;
+  }
+  button:disabled{
+    opacity:0.55;
+  }
+  .notif-msg{
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    margin-top:8px;
+    line-height:1.4;
+  }
+  .day-table{
+    max-width:520px;
+    margin:14px auto;
+    padding:0 12px;
+  }
+  .day-table h2{
+    font-family:'Baloo 2', sans-serif;
+    font-size:1rem;
+    color:var(--ink-dim);
+    text-align:center;
+    margin-bottom:10px;
+    font-weight:700;
+    letter-spacing:0.3px;
+  }
+  .row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:13px 14px;
+    border-radius:10px;
+    margin-bottom:7px;
+    font-size:1.05rem;
+    font-weight:600;
+    background: linear-gradient(155deg, var(--row-bg), var(--row-bg-2));
+    border:1px solid #2f5c93;
+    color:var(--row-text);
+  }
+  .row.current{
+    background: linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    color:var(--class-text);
+    border-color:transparent;
+    transform:scale(1.04);
+    box-shadow:0 6px 18px rgba(216,54,43,0.4);
+    font-weight:800;
+    font-size:1.12rem;
+  }
+  .row.duty{ background:linear-gradient(155deg,#3a2a55,#2a1d40); border-color:#5c3f80; color:#e6c9ff;}
+  .row.current.duty{ background:var(--duty-bg); color:var(--duty-text); box-shadow:0 6px 18px rgba(165,97,216,0.45); }
+  .row.break{ background:linear-gradient(155deg,#5c4319,#3d2c10); border-color:#9a6f2b; color:#ffd98a;}
+  .row.current.break{ background:var(--break-bg); color:var(--break-text); box-shadow:0 6px 18px rgba(242,169,59,0.45); }
+  .row.prayer{ background:linear-gradient(155deg,#1a4a45,#123330); border-color:#2f7a70; color:#8fe8db;}
+  .row .time{
+    width:118px;
+    flex-shrink:0;
+    font-variant-numeric: tabular-nums;
+    font-size:0.9rem;
+    color:var(--row-time);
+    opacity:0.95;
+  }
+  .row.current .time{ color:rgba(255,255,255,0.9); }
+  .row .label{ flex:1; color:inherit; }
+  .row .class-tag{
+    background:rgba(255,255,255,0.18);
+    padding:5px 13px;
+    border-radius:20px;
+    font-size:0.85rem;
+    font-weight:800;
+    white-space:nowrap;
+  }
+  .absent-panel{
+    max-width:520px;
+    margin:14px auto;
+    padding:0 12px;
+  }
+  .absent-panel h2{
+    font-family:'Baloo 2', sans-serif;
+    font-size:1rem;
+    color:var(--ink-dim);
+    text-align:center;
+    margin:10px 0 10px;
+    font-weight:700;
+    letter-spacing:0.3px;
+  }
+  .absent-box{
+    background:var(--panel);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:12px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.25);
+  }
+  .absent-day-row{
+    margin-bottom:12px;
+  }
+  .absent-day-row select{
+    width:100%;
+    padding:11px 12px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-family:'Mukta', sans-serif;
+    font-size:0.95rem;
+    font-weight:600;
+  }
+  .teacher-check-hint{
+    font-size:0.76rem;
+    color:var(--ink-dim);
+    line-height:1.5;
+    margin-bottom:10px;
+  }
+  .teacher-check-list{
+    max-height:230px;
+    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding-right:2px;
+  }
+  .teacher-check-list label{
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:9px 10px;
+    border-radius:9px;
+    background:var(--panel-2);
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .teacher-check-list input[type="checkbox"]{
+    width:17px;
+    height:17px;
+    accent-color:var(--class-bg1);
+    flex-shrink:0;
+  }
+  .teacher-check-item{
+    background:var(--panel-2);
+    border-radius:9px;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+  .teacher-check-item > label{
+    padding:9px 10px;
+    margin:0;
+  }
+  .teacher-leave-detail{
+    padding:2px 10px 10px 36px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .full-day-label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.82rem;
+    font-weight:600;
+    color:var(--ink-dim);
+    cursor:pointer;
+  }
+  .full-day-label input[type="checkbox"]{
+    width:15px;
+    height:15px;
+    accent-color:var(--break-bg);
+    flex-shrink:0;
+  }
+  .period-check-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .period-check-label{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    padding:5px 9px;
+    border-radius:7px;
+    background:var(--panel);
+    font-size:0.78rem;
+    font-weight:600;
+    color:var(--ink-dim);
+    cursor:pointer;
+  }
+  .period-check-label input[type="checkbox"]{
+    width:14px;
+    height:14px;
+    accent-color:var(--class-bg1);
+    flex-shrink:0;
+  }
+  .period-check-label input[type="checkbox"]:checked ~ span,
+  .period-check-label:has(input:checked){
+    color:var(--ink);
+  }
+  .no-period-hint{
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    font-style:italic;
+  }
+  .sort-toggle{
+    display:flex;
+    gap:8px;
+    margin:14px 0 12px;
+  }
+  .sort-toggle label{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:10px 8px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    font-size:0.85rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .sort-toggle input{ accent-color:var(--class-bg1); }
+  .skip-toggle{ margin:0 0 14px; }
+  .skip-toggle label{ font-size:0.78rem; padding:9px 4px; }
+  #generateSubBtn{
+    width:100%;
+    background:linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    color:var(--class-text);
+    border:none;
+    padding:13px;
+    font-size:1rem;
+  }
+  .sub-empty{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:0.88rem;
+    padding:18px 8px;
+  }
+  .sub-card{
+    background:var(--panel);
+    border-radius:12px;
+    padding:12px 14px;
+    margin-bottom:9px;
+    border-left:5px solid var(--line);
+  }
+  .sub-card.sub-regular{ border-left-color:#3b9de0; }
+  .sub-card.sub-merged{ border-left-color:#8d99ab; opacity:0.85; }
+  .sub-card.sub-off{ border-left-color:#1e9e6d; }
+  .sub-card.sub-extra{ border-left-color:#d8362b; }
+  .sub-card.sub-unassigned{
+    border-left-color:#ff2d2d;
+    background:#3a1414;
+    box-shadow:0 0 0 1.5px rgba(255,45,45,0.55);
+    animation: unassignedPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes unassignedPulse{
+    0%,100%{ box-shadow:0 0 0 1.5px rgba(255,45,45,0.45); }
+    50%{ box-shadow:0 0 0 1.5px rgba(255,45,45,0.9); }
+  }
+  .sub-card.sub-unassigned .sub-body{ color:#ffd3d3; font-weight:600; opacity:1; }
+  .unassigned-banner{
+    max-width:440px;
+    margin:0 auto 10px;
+    padding:12px 14px;
+    background:#3a1414;
+    border:1.5px solid #ff2d2d;
+    border-radius:12px;
+    color:#ffd3d3;
+    font-size:0.86rem;
+    font-weight:700;
+    line-height:1.5;
+    text-align:center;
+  }
+  .diagnosis-box{
+    max-width:440px;
+    margin:0 auto 14px;
+    padding:14px 16px;
+    background:#3a2c0e;
+    border:1.5px solid var(--break-bg);
+    border-radius:14px;
+    color:#ffdf9b;
+    font-size:0.85rem;
+    line-height:1.55;
+  }
+  .diagnosis-box h3{
+    margin:0 0 8px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.98rem;
+    color:#ffdf9b;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .diagnosis-stats{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px 14px;
+    margin-bottom:10px;
+    font-size:0.82rem;
+  }
+  .diagnosis-stats span{ white-space:nowrap; }
+  .diagnosis-reason{
+    font-weight:700;
+    margin-bottom:10px;
+    padding:8px 10px;
+    background:rgba(0,0,0,0.18);
+    border-radius:8px;
+  }
+  .diagnosis-periods{
+    font-size:0.8rem;
+    opacity:0.9;
+    margin-bottom:10px;
+  }
+  .diagnosis-box h4{
+    margin:0 0 6px;
+    font-size:0.86rem;
+    color:#ffdf9b;
+  }
+  .diagnosis-box ul{
+    margin:0;
+    padding-left:20px;
+  }
+  .diagnosis-box li{ margin-bottom:6px; }
+  .off-summary{
+    max-width:440px;
+    margin:14px auto 0;
+    padding:14px 16px;
+    background:var(--panel);
+    border-radius:14px;
+  }
+  .period-summary{
+    max-width:440px;
+    margin:14px auto 0;
+    padding:14px 16px;
+    background:var(--panel);
+    border-radius:14px;
+  }
+  .period-summary h3{
+    margin:0 0 4px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  .period-summary-stats{
+    font-size:0.8rem;
+    color:var(--ink-dim);
+    margin-bottom:6px;
+  }
+  .period-summary-stats b{ color:var(--ink); }
+  .period-summary .live-tag{
+    display:inline-block;
+    font-size:0.68rem;
+    font-weight:700;
+    letter-spacing:0.5px;
+    color:#8ef2a6;
+    background:rgba(30,158,109,0.18);
+    border:1px solid #1e9e6d;
+    border-radius:8px;
+    padding:1px 7px;
+    margin-left:6px;
+    vertical-align:middle;
+  }
+  .period-summary table{ width:100%; border-collapse:collapse; font-size:0.82rem; margin-top:8px; }
+  .period-summary th, .period-summary td{
+    text-align:center;
+    padding:6px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .period-summary th{ color:var(--ink-dim); font-weight:600; }
+  .period-summary td:first-child, .period-summary th:first-child{ text-align:left; }
+  .period-summary td.psum-empty{ color:#ff6a6a; font-weight:700; }
+  .period-summary td.psum-empty.zero{ color:var(--ink-dim); font-weight:500; }
+  .period-summary tfoot td{ font-weight:700; border-top:1.5px solid var(--line); border-bottom:none; }
+  .period-roster{
+    max-width:440px;
+    margin:14px auto 0;
+    padding:14px 16px;
+    background:var(--panel);
+    border-radius:14px;
+  }
+  .period-roster h3{
+    margin:0 0 4px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  .period-roster .roster-hint{
+    font-size:0.76rem;
+    color:var(--ink-dim);
+    margin-bottom:8px;
+  }
+  .roster-period{
+    padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .roster-period:last-child{ border-bottom:none; }
+  .roster-period-label{
+    font-size:0.82rem;
+    font-weight:700;
+    color:#ffd93d;
+    margin-bottom:4px;
+  }
+  .roster-chip-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .roster-chip{
+    font-size:0.76rem;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:4px 8px;
+    line-height:1.3;
+  }
+  .roster-chip b{ color:var(--ink); }
+  .roster-chip.chip-empty{
+    background:#3a1414;
+    border-color:#ff2d2d;
+    color:#ffd3d3;
+    font-weight:600;
+  }
+  .roster-chip.chip-merged{
+    background: linear-gradient(155deg, #f2c94c, #d9a520);
+    border-color:transparent;
+    color:#2b2005;
+    font-weight:700;
+    opacity:1;
+  }
+  .roster-chip.chip-merged b{ color:#2b2005; }
+  .roster-chip.chip-sub{
+    background:linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    border-color:transparent;
+    color:var(--class-text);
+    font-weight:700;
+  }
+  .roster-chip.chip-sub b{ color:var(--class-text); }
+  .newtt-panel{
+    max-width:440px;
+    margin:14px auto 0;
+    padding:14px 16px;
+    background:var(--panel);
+    border-radius:14px;
+  }
+  .newtt-panel h3{
+    margin:0 0 10px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  .newtt-panel .teacher-picker{ padding:0; margin:0 0 12px; max-width:none; }
+  .newtt-panel .sort-toggle{ margin:0 0 12px; }
+  .newtt-panel .row{ padding:11px 12px; font-size:0.95rem; }
+  .newtt-panel .row .time{ width:100px; font-size:0.8rem; }
+  .newtt-panel .row .class-tag{ font-size:0.78rem; padding:4px 10px; }
+  .row.tt-sub{
+    background:linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+    color:var(--class-text);
+    border-color:transparent;
+  }
+  .row.tt-merged{
+    background:linear-gradient(155deg, #f2c94c, #d9a520);
+    color:#2b2005;
+    border-color:transparent;
+  }
+  .row.tt-empty{
+    background:#3a1414;
+    border-color:#ff2d2d;
+    color:#ffd3d3;
+  }
+  .row.tt-off{ opacity:0.55; }
+  .newtt-hint{
+    font-size:0.76rem;
+    color:var(--ink-dim);
+    margin:-2px 0 12px;
+  }
+  .off-summary h3{
+    margin:0 0 10px;
+    font-family:'Baloo 2', sans-serif;
+    font-size:0.95rem;
+    color:var(--ink);
+  }
+  .off-summary table{ width:100%; border-collapse:collapse; font-size:0.82rem; }
+  .off-summary th, .off-summary td{
+    text-align:left;
+    padding:6px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .off-summary th{ color:var(--ink-dim); font-weight:600; }
+  .off-summary td.num{ text-align:center; }
+  .off-summary .off-name{ color:var(--ink); }
+  .sub-head{
+    font-size:0.92rem;
+    font-weight:700;
+    margin-bottom:4px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:center;
+  }
+  .sub-absent{
+    font-size:0.72rem;
+    font-weight:600;
+    color:var(--ink-dim);
+    background:var(--panel-2);
+    padding:2px 8px;
+    border-radius:10px;
+  }
+  .sub-body{
+    font-size:0.85rem;
+    line-height:1.45;
+    color:var(--ink);
+    opacity:0.92;
+  }
+  footer{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:0.72rem;
+    padding:18px 24px 6px;
+    line-height:1.5;
+  }
+  .absent-day-row{ display:flex; gap:8px; }
+  .absent-day-row input[type="date"]{
+    flex:1;
+    padding:11px 10px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-family:'Mukta', sans-serif;
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  .absent-day-row select{ flex:1; }
+  .merge-grade-hint{
+    font-size:0.85rem;
+    font-weight:700;
+    margin-bottom:10px;
+    color:var(--ink);
+  }
+  .merge-grade-list{
+    display:flex;
+    gap:8px;
+    margin-bottom:4px;
+  }
+  .merge-grade-list label{
+    flex:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    padding:10px 6px;
+    border-radius:10px;
+    background:var(--panel-2);
+    border:1.5px solid var(--line);
+    font-size:0.88rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .merge-grade-list input[type="checkbox"]{
+    width:17px;
+    height:17px;
+    accent-color:var(--class-bg1);
+    flex-shrink:0;
+  }
+  .save-row{
+    margin-top:14px;
+    text-align:center;
+  }
+  #saveLogBtn{
+    width:100%;
+    background:var(--duty-bg);
+    color:var(--duty-text);
+    border:none;
+    border-radius:12px;
+    padding:13px;
+    font-size:0.95rem;
+    font-weight:700;
+    font-family:'Mukta', sans-serif;
+    cursor:pointer;
+  }
+  .save-msg{
+    margin-top:8px;
+    font-size:0.82rem;
+    color:var(--holiday-bg);
+    font-weight:600;
+    min-height:1em;
+  }
+  .report-panel{
+    max-width:520px;
+    margin:26px auto 14px;
+    padding:0 12px;
+  }
+  .report-panel h2{
+    font-family:'Baloo 2', sans-serif;
+    font-size:1rem;
+    color:var(--ink-dim);
+    text-align:center;
+    margin:10px 0 10px;
+    font-weight:700;
+    letter-spacing:0.3px;
+  }
+  .report-controls{
+    display:flex;
+    gap:8px;
+  }
+  .report-controls input[type="month"]{
+    flex:1;
+    padding:11px 10px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-family:'Mukta', sans-serif;
+    font-size:0.9rem;
+    font-weight:600;
+  }
+  #viewReportBtn, #printReportBtn{
+    border:none;
+    border-radius:10px;
+    padding:11px 14px;
+    font-size:0.88rem;
+    font-weight:700;
+    font-family:'Mukta', sans-serif;
+    cursor:pointer;
+    color:var(--class-text);
+    background:linear-gradient(155deg, var(--class-bg1), var(--class-bg2));
+  }
+  #printReportBtn{
+    width:100%;
+    margin-top:12px;
+    background:linear-gradient(155deg, #1e9e6d, #157a53);
+  }
+  .report-table-wrap{ margin-top:14px; }
+  table.report-table{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--panel);
+    border-radius:12px;
+    overflow:hidden;
+    font-size:0.82rem;
+  }
+  table.report-table th, table.report-table td{
+    padding:9px 8px;
+    text-align:center;
+    border-bottom:1px solid var(--line);
+  }
+  table.report-table th{
+    background:var(--panel-2);
+    color:var(--ink-dim);
+    font-size:0.72rem;
+    letter-spacing:0.3px;
+  }
+  table.report-table td.name-cell{ text-align:left; font-weight:600; }
+  .report-empty{
+    text-align:center;
+    color:var(--ink-dim);
+    font-size:0.85rem;
+    padding:14px 8px;
+  }
+  #printReportArea{ display:none; }
+  @media print{
+    body.printing-report > *:not(#printReportArea){ display:none !important; }
+    body.printing-report{ background:#fff; }
+    #printReportArea{
+      display:block !important;
+      background:#fff;
+      color:#000;
+      padding:10px;
+    }
+    #printReportArea table{ width:100%; border-collapse:collapse; }
+    #printReportArea th, #printReportArea td{ border:1px solid #333; padding:6px 8px; font-size:12px; text-align:center; }
+    #printReportArea td.name-cell{ text-align:left; }
+    #printReportArea h1{ font-size:16px; text-align:center; }
+    #printReportArea h2{ font-size:13px; text-align:center; color:#333; }
+  }
+  #pdfCaptureArea{
+    position:fixed;
+    left:-9999px;
+    top:0;
+    width:720px;
+    background:#ffffff;
+    color:#111;
+    padding:22px;
+    font-family:'Mukta','Noto Sans Devanagari', sans-serif;
+  }
+  #pdfCaptureArea h1{ font-size:20px; text-align:center; margin:0 0 6px; }
+  #pdfCaptureArea h2{ font-size:14px; text-align:center; margin:0 0 16px; color:#444; font-weight:600; }
+  #pdfCaptureArea table{ width:100%; border-collapse:collapse; }
+  #pdfCaptureArea th, #pdfCaptureArea td{ border:1px solid #333; padding:9px 10px; font-size:14px; text-align:center; }
+  #pdfCaptureArea td.tname-cell{ text-align:left; font-weight:600; }
+  #pdfCaptureArea th{ background:#eee; }
+  #pdfCaptureArea .pdf-note{ text-align:center; font-size:12px; margin-top:12px; color:#555; }
+  #pdfCaptureArea .pdf-empty{ text-align:center; font-size:14px; padding:20px; }
+  #printSubBtn{
+    width:100%;
+    margin-top:10px;
+    border:none;
+    border-radius:12px;
+    padding:13px;
+    font-size:0.95rem;
+    font-weight:700;
+    font-family:'Mukta', sans-serif;
+    cursor:pointer;
+    color:var(--duty-text);
+    background:linear-gradient(155deg, var(--duty-bg), #7d3fae);
+  }
+  .sub-toggle-row{
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed var(--line);
+  }
+  .sub-toggle-row label{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:0.8rem;
+    font-weight:600;
+    color:var(--ink-dim);
+  }
+  .sub-toggle-row select{
+    flex:1;
+    padding:8px 9px;
+    border-radius:9px;
+    border:1.5px solid var(--line);
+    background:var(--panel-2);
+    color:var(--ink);
+    font-family:'Mukta', sans-serif;
+    font-size:0.83rem;
+    font-weight:600;
+  }
+  .reset-row{
+    max-width:440px;
+    margin:12px auto 0;
+    padding:0 16px;
+    text-align:center;
+  }
+  #resetDataBtn{
+    background:transparent;
+    color:#d8362b;
+    border:1.5px solid #6b2a24;
+    padding:8px 16px;
+    font-size:0.8rem;
+    font-weight:700;
+    border-radius:10px;
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔔 तासिका सूचक</h1>
+  <div class="sub" id="teacherSub">— शिक्षक वेळापत्रक</div>
+</header>
+
+<div class="mode-toggle">
+  <button id="modeTeacherBtn" class="mode-btn active">👨‍🏫 शिक्षकानुसार</button>
+  <button id="modeClassBtn" class="mode-btn">🏫 वर्गानुसार</button>
+  <button id="modeAbsentBtn" class="mode-btn">🔄 गैरहजर</button>
+</div>
+
+<div class="reset-row">
+  <button id="resetDataBtn">♻️ डेटा रिसेट करा (Reset)</button>
+</div>
+
+<div class="teacher-picker" id="teacherPicker">
+  <select id="teacherSelect"></select>
+</div>
+
+<div class="teacher-picker" id="classPicker" style="display:none;">
+  <select id="classSelect"></select>
+</div>
+
+<div class="clock-row">
+  <span id="dayName">--</span>
+  <span id="clockTime">--:--:--</span>
+</div>
+
+<div id="fileWarning">
+  ⚠️ हे पेज सध्या फोनवरील फाईलमधून थेट उघडलेले आहे (file://). अशा स्थितीत Chrome नोटिफिकेशन देत नाही. आधी ही फाईल इंटरनेटवर होस्ट करा (उदा. Netlify) आणि तिथली https लिंक उघडा.
+</div>
+
+<div class="status-card" id="statusCard">
+  <div class="status-tag" id="statusTag">स्थिती</div>
+  <div class="status-main" id="statusMain">लोड होत आहे...</div>
+  <div class="status-detail" id="statusDetail"></div>
+  <div class="status-time" id="statusTime"></div>
+  <div class="countdown" id="countdown"></div>
+  <div class="next-strip" id="nextStrip"></div>
+</div>
+
+<div class="notif-box">
+  <button id="enableBtn">🔔 सूचना (Notification) सुरू करा</button>
+  <div class="notif-msg" id="notifMsg">
+    तास सुरू झाल्यावर मोबाईलमध्ये नोटिफिकेशन आणि व्हायब्रेशन मिळण्यासाठी वरील बटण दाबा व परवानगी द्या.
+  </div>
+</div>
+
+<div class="day-table">
+  <div class="sort-toggle skip-toggle" id="skipToggle">
+    <label><input type="radio" name="skipOpt" value="0" checked> नियमित तास</label>
+    <label><input type="radio" name="skipOpt" value="1"> १ तास वगळून</label>
+    <label><input type="radio" name="skipOpt" value="2"> २ तास वगळून</label>
+  </div>
+  <h2 id="tableHeading">आजचे वेळापत्रक</h2>
+  <div id="rows"></div>
+</div>
+
+<div class="absent-panel" id="absentPanel" style="display:none;">
+  <h2>🔄 गैरहजर शिक्षक — तास वाटप</h2>
+  <div class="absent-box">
+    <div class="absent-day-row">
+      <input type="date" id="absentDateInput">
+      <select id="absentDaySelect">
+        <option value="monday">सोमवार</option>
+        <option value="tuesday">मंगळवार</option>
+        <option value="wednesday">बुधवार</option>
+        <option value="thursday">गुरुवार</option>
+        <option value="friday">शुक्रवार</option>
+        <option value="saturday">शनिवार</option>
+      </select>
+    </div>
+    <div class="teacher-check-hint">शिक्षकाला टिक केल्यावर खाली तपशील दिसेल — पूर्ण दिवस गैरहजर असल्यास तसेच ठेवा, किंवा फक्त काही तासच (उदा. अर्धा दिवस / २-३ तास) रजेवर असल्यास "पूर्ण दिवस" टिक काढून फक्त तेच तास निवडा.</div>
+    <div class="teacher-check-list" id="teacherCheckboxes"></div>
+  </div>
+  <div class="absent-box">
+    <div class="merge-grade-hint">कोणता वर्ग एकत्र करायचा? (पर्यायी — निवडलेला वर्ग नसेल तर तो एकत्र केला जाणार नाही)</div>
+    <div class="merge-grade-list">
+      <label><input type="checkbox" class="mergeGradeCb" value="5"> पाचवी</label>
+      <label><input type="checkbox" class="mergeGradeCb" value="7"> सातवी</label>
+      <label><input type="checkbox" class="mergeGradeCb" value="8"> आठवी</label>
+    </div>
+    <div class="absent-day-row" style="margin-top:10px;">
+      <select id="mergeHostSelect">
+        <option value="A">अ तुकडीनुसार तास (ब तुकडीचे शिक्षक मोकळे — R)</option>
+        <option value="B">ब तुकडीनुसार तास (अ तुकडीचे शिक्षक मोकळे — R)</option>
+      </select>
+    </div>
+  </div>
+  <div class="sort-toggle">
+    <label><input type="radio" name="sortOpt" value="period" checked> तास क्रमानुसार</label>
+    <label><input type="radio" name="sortOpt" value="teacher"> शिक्षकानुसार</label>
+  </div>
+  <div class="absent-box">
+    <label style="display:flex; align-items:flex-start; gap:8px; font-size:0.88rem; line-height:1.4;">
+      <input type="checkbox" id="minOffGuaranteeCb" checked style="margin-top:3px;">
+      <span>सर्वांना किमान १ तास ऑफ राखीव ठेवा (शक्य असेल तेव्हा)<br>
+      <span style="color:var(--ink-dim); font-size:0.78rem;">(चालू असल्यास प्रत्येकाला किमान १ तास ऑफ राखीव ठेवून वाटप केलं जाईल. काही वर्गांना शिक्षक न मिळाल्यास सिस्टीम स्वतःहून हा नियम बदलत नाही — त्याऐवजी खाली "🧩 उपाय सुचना" बॉक्समध्ये हा पर्याय बंद करण्याची सूचना दिली जाईल, निर्णय तुम्हीच घ्यायचा.)</span></span>
+    </label>
+  </div>
+  <button id="generateSubBtn">✅ तास वाटप तयार करा</button>
+  <div id="periodRoster"></div>
+
+  <div class="newtt-panel" id="newttPanel" style="display:none;">
+    <h3>🗓️ आजचे नवीन वेळापत्रक (गैरहजर वजा करून)</h3>
+    <div class="newtt-hint">वर्ग किंवा शिक्षक निवडून त्या दिवसाचे बदललेले (अंतिम) वेळापत्रक तासा-तासाने पाहा.</div>
+    <div class="sort-toggle" id="newttModeToggle">
+      <label><input type="radio" name="newttMode" value="class" checked> 🏫 वर्गानुसार</label>
+      <label><input type="radio" name="newttMode" value="teacher"> 👨‍🏫 शिक्षकानुसार</label>
+    </div>
+    <div class="teacher-picker" id="newttClassPicker">
+      <select id="newttClassSelect"></select>
+    </div>
+    <div class="teacher-picker" id="newttTeacherPicker" style="display:none;">
+      <select id="newttTeacherSelect"></select>
+    </div>
+    <div id="newttRows"></div>
+  </div>
+
+  <div id="periodSummary"></div>
+  <div id="diagnosisBox"></div>
+  <div id="subResults"></div>
+  <div id="offSummary"></div>
+  <div class="save-row" id="saveRow" style="display:none;">
+    <button id="saveLogBtn">💾 आजचे वाटप जतन करा (Save)</button>
+    <div class="save-msg" id="saveMsg"></div>
+    <button id="printSubBtn">📄 PDF डाउनलोड करा (ग्रुपसाठी)</button>
+    <div class="save-msg" id="pdfMsg"></div>
+  </div>
+</div>
+<div id="pdfCaptureArea"></div>
+
+<div class="report-panel" id="reportPanel">
+  <h2>📊 मासिक तासिका अहवाल — कोणाचे किती (R)/अतिरिक्त तास पडले</h2>
+  <div class="absent-box">
+    <div class="report-controls">
+      <input type="month" id="reportMonthInput">
+      <button id="viewReportBtn">👁️ अहवाल पहा</button>
+    </div>
+    <div class="report-table-wrap" id="reportTableWrap">
+      <div class="report-empty">महिना निवडून "अहवाल पहा" दाबा.</div>
+    </div>
+    <button id="printReportBtn" style="display:none;">🖨️ PDF अहवाल तयार करा (Print / Save as PDF)</button>
+  </div>
+</div>
+<div id="printReportArea"></div>
+
+<footer>
+  ही सोय हा वेब पेज असल्यामुळे सर्वोत्तम काम करण्यासाठी: हे पेज ब्राउझरमध्ये उघडे ठेवा, किंवा ब्राउझर मेनूमधून "Add to Home Screen" करा. टॅब पूर्ण बंद केल्यास किंवा फोन खूप वेळ लॉक असल्यास काही फोनवर नोटिफिकेशन उशिरा येऊ शकते. iPhone वर व्हायब्रेशन काम करणार नाही, पण नोटिफिकेशन येईल.
+  <br><br>
+  टीप: वरील "शिक्षकानुसार / वर्गानुसार" बटणांनी तुम्ही शिक्षक निवडून त्यांचे वेळापत्रक पाहू शकता, किंवा वर्ग (इयत्ता) निवडून त्या वर्गाला कोणत्या तासाला कोणता शिक्षक शिकवतो हे पाहू शकता.
+  <br><br>
+  "🔄 गैरहजर" बटणाने तुम्ही एक किंवा अधिक गैरहजर शिक्षक निवडून त्यांच्या तासांचे आपोआप वाटप पाहू शकता. वाटप या क्रमाने ठरते: प्रथम (R) — "वर्ग एकत्र करा" टिक केले असल्यास, फक्त 5वी ते 8वी च्या अ/ब तुकडीतच (क तुकडी व 9वी-10वी कधीच नाही) निवडलेल्या तुकडीनुसार (अ किंवा ब) दिवसभर तास चालतात, त्यामुळे दुसऱ्या तुकडीचे शिक्षक मोकळे होतात; असा मोकळा झालेला शिक्षक कोणत्याही इयत्तेला व कोणत्याही तुकडीला (R) म्हणून दिला जाऊ शकतो; आणि मोकळ्या झालेल्या शिक्षकांचे (R) तास शिल्लक नसतील तरच एक्स्ट्रा तास (E ⚠️) दिला जातो.
+</footer>
+
+<script>
+// ---------- SCHEDULE DATA (कालावधी सर्वांसाठी सारखेच आहेत) ----------
+const daySchedules = {
+  monThu: [
+    {start:"11:30", end:"11:40", type:"prayer", label:"प्रार्थना"},
+    {start:"11:40", end:"12:20", type:"period", num:1},
+    {start:"12:20", end:"12:55", type:"period", num:2},
+    {start:"12:55", end:"13:30", type:"period", num:3},
+    {start:"13:30", end:"13:55", type:"break", label:"मोठी सुट्टी"},
+    {start:"13:55", end:"14:30", type:"period", num:4},
+    {start:"14:30", end:"15:05", type:"period", num:5},
+    {start:"15:05", end:"15:15", type:"break", label:"लहान सुट्टी"},
+    {start:"15:15", end:"15:50", type:"period", num:6},
+    {start:"15:50", end:"16:25", type:"period", num:7},
+    {start:"16:25", end:"17:00", type:"period", num:8},
+  ],
+  friday: [
+    {start:"11:30", end:"11:40", type:"prayer", label:"प्रार्थना"},
+    {start:"11:40", end:"12:20", type:"period", num:1},
+    {start:"12:20", end:"12:50", type:"period", num:2},
+    {start:"12:50", end:"13:20", type:"period", num:3},
+    {start:"13:20", end:"13:50", type:"period", num:4},
+    {start:"13:50", end:"14:20", type:"duty", label:"गेट ड्युटी (मोठी सुट्टी)"},
+    {start:"14:20", end:"14:50", type:"period", num:5},
+    {start:"14:50", end:"15:20", type:"period", num:6},
+    {start:"15:20", end:"15:50", type:"period", num:7},
+    {start:"15:50", end:"16:00", type:"duty", label:"गेट ड्युटी (लहान सुट्टी)"},
+    {start:"16:00", end:"16:30", type:"period", num:8},
+    {start:"16:30", end:"17:00", type:"period", num:9},
+  ],
+  saturday: [
+    {start:"07:30", end:"07:40", type:"prayer", label:"प्रार्थना"},
+    {start:"07:40", end:"08:20", type:"period", num:1},
+    {start:"08:20", end:"08:50", type:"period", num:2},
+    {start:"08:50", end:"09:20", type:"period", num:3},
+    {start:"09:20", end:"09:50", type:"period", num:4},
+    {start:"09:50", end:"10:00", type:"break", label:"मोठी सुट्टी"},
+    {start:"10:00", end:"10:30", type:"period", num:5},
+    {start:"10:30", end:"11:00", type:"period", num:6},
+    {start:"11:00", end:"11:30", type:"period", num:7},
+  ]
+};
+
+
+// ---------- सर्व शिक्षकांचा डेटा (मूळ मास्टर टाईमटेबलमधून) ----------
+const teacherData = {
+  t1: {
+    name: "Shri Katake U.G",
+    periods: {
+      monday: {1:null, 2:null, 3:null, 4:{c:"9A",s:"DEF"}, 5:null, 6:null, 7:null, 8:null},
+      tuesday: {1:null, 2:null, 3:null, 4:null, 5:null, 6:{c:"9A",s:"DEF"}, 7:null, 8:null},
+      wednesday: {1:null, 2:{c:"6B",s:"VE"}, 3:null, 4:null, 5:{c:"10A",s:"GEO"}, 6:null, 7:null, 8:null},
+      thursday: {1:null, 2:{c:"6B",s:"VE"}, 3:{c:"10A",s:"GEO"}, 4:null, 5:null, 6:null, 7:null, 8:null},
+      friday: {1:null, 2:{c:"6B",s:"VE"}, 3:null, 4:null, 5:null, 6:null, 7:null, 8:null, 9:null},
+      saturday: {1:null, 2:{c:"6B",s:"VE"}, 3:null, 4:{c:"10A",s:"GEO"}, 5:{c:"5C",s:"WE"}, 6:null, 7:null},
+    }
+  },
+  t2: {
+    name: "Shri. Kachare B",
+    periods: {
+      monday: {1:null, 2:{c:"10B",s:"ENG"}, 3:{c:"9C",s:"ENG"}, 4:{c:"10A",s:"ENG"}, 5:{c:"8A",s:"PT"}, 6:{c:"10B",s:"ENG"}, 7:null, 8:{c:"9B",s:"ENG"}},
+      tuesday: {1:null, 2:{c:"9B",s:"ENG"}, 3:{c:"10A",s:"ENG"}, 4:{c:"9B",s:"ENG"}, 5:{c:"10B",s:"ENG"}, 6:{c:"9C",s:"ENG"}, 7:{c:"10A",s:"ENG"}, 8:{c:"10C",s:"ENG"}},
+      wednesday: {1:null, 2:{c:"9B",s:"ENG"}, 3:{c:"10A",s:"ENG"}, 4:{c:"10C",s:"ENG"}, 5:{c:"10B",s:"ENG"}, 6:{c:"8B",s:"PT"}, 7:{c:"9C",s:"ENG"}, 8:null},
+      thursday: {1:null, 2:{c:"9C",s:"ENG"}, 3:{c:"10B",s:"ENG"}, 4:{c:"9C",s:"ENG"}, 5:{c:"10C",s:"ENG"}, 6:{c:"10C",s:"ENG"}, 7:{c:"9B",s:"ENG"}, 8:{c:"10C",s:"ENG"}},
+      friday: {1:null, 2:{c:"10A",s:"ENG"}, 3:{c:"9B",s:"PT"}, 4:{c:"9B",s:"ENG"}, 5:{c:"10B",s:"ENG"}, 6:null, 7:{c:"9B",s:"ENG"}, 8:{c:"10C",s:"ENG"}, 9:{c:"9C",s:"ENG"}},
+      saturday: {1:null, 2:{c:"10A",s:"ENG"}, 3:{c:"10B",s:"ENG"}, 4:{c:"10C",s:"ENG"}, 5:{c:"10A",s:"ENG"}, 6:null, 7:{c:"9C",s:"ENG"}},
+    }
+  },
+  t3: {
+    name: "Shri Shinde G.D",
+    periods: {
+      monday: {1:{c:"10A",s:"HIS"}, 2:{c:"9A",s:"HIS"}, 3:{c:"6A",s:"PT"}, 4:{c:"9C",s:"PT"}, 5:{c:"5A",s:"PT"}, 6:null, 7:{c:"7B",s:"PT"}, 8:{c:"10B",s:"PT"}},
+      tuesday: {1:{c:"10A",s:"HIS"}, 2:{c:"10C",s:"PT"}, 3:null, 4:{c:"8C",s:"PT"}, 5:{c:"6C",s:"MAR"}, 6:{c:"5B",s:"PT"}, 7:null, 8:{c:"5A",s:"PT"}},
+      wednesday: {1:{c:"10A",s:"HIS"}, 2:null, 3:{c:"9B",s:"PT"}, 4:{c:"8A",s:"PT"}, 5:{c:"6C",s:"MAR"}, 6:{c:"7A",s:"PT"}, 7:{c:"5B",s:"PT"}, 8:null},
+      thursday: {1:{c:"10A",s:"HIS"}, 2:{c:"10B",s:"PT"}, 3:{c:"8C",s:"PT"}, 4:{c:"9B",s:"PT"}, 5:{c:"9A",s:"HIS"}, 6:null, 7:{c:"7A",s:"PT"}, 8:null},
+      friday: {1:{c:"10A",s:"PT"}, 2:null, 3:{c:"9A",s:"HIS"}, 4:{c:"6C",s:"MAR"}, 5:{c:"6C",s:"PT"}, 6:null, 7:{c:"10C",s:"PT"}, 8:{c:"9C",s:"PT"}, 9:{c:"6A",s:"PT"}},
+      saturday: {1:{c:"10A",s:"PT"}, 2:null, 3:{c:"5C",s:"PT"}, 4:{c:"6C",s:"MAR"}, 5:{c:"6C",s:"PT"}, 6:{c:"9A",s:"HIS"}, 7:{c:"7B",s:"PT"}},
+    }
+  },
+  t4: {
+    name: "Shri. Kadam S.P",
+    periods: {
+      monday: {1:null, 2:{c:"5A",s:"EVS1"}, 3:{c:"5A",s:"EVS1"}, 4:{c:"5B",s:"EVS1"}, 5:{c:"5B",s:"DRA"}, 6:{c:"5C",s:"DRA"}, 7:{c:"7A",s:"DRA"}, 8:{c:"5B",s:"EVS1"}},
+      tuesday: {1:null, 2:{c:"5B",s:"EVS1"}, 3:{c:"5A",s:"EVS1"}, 4:{c:"5C",s:"DRA"}, 5:{c:"5B",s:"EVS1"}, 6:null, 7:{c:"7A",s:"DRA"}, 8:{c:"5B",s:"EVS1"}},
+      wednesday: {1:null, 2:{c:"5A",s:"EVS1"}, 3:{c:"5A",s:"EVS1"}, 4:{c:"5B",s:"EVS1"}, 5:{c:"5B",s:"EVS1"}, 6:{c:"7B",s:"DRA"}, 7:{c:"7C",s:"DRA"}, 8:{c:"5C",s:"DRA"}},
+      thursday: {1:null, 2:{c:"5A",s:"EVS1"}, 3:{c:"7B",s:"DRA"}, 4:{c:"7A",s:"DRA"}, 5:{c:"7C",s:"DRA"}, 6:{c:"6A",s:"DRA"}, 7:null, 8:{c:"6A",s:"DRA"}},
+      friday: {1:null, 2:{c:"7C",s:"DRA"}, 3:{c:"8A",s:"DRA"}, 4:{c:"9A",s:"PT"}, 5:{c:"7B",s:"DRA"}, 6:{c:"10B",s:"DEF"}, 7:null, 8:{c:"10B",s:"DEF"}, 9:{c:"5A",s:"EVS1"}},
+      saturday: {1:null, 2:{c:"6A",s:"DRA"}, 3:{c:"8A",s:"DRA"}, 4:{c:"5B",s:"DRA"}, 5:null, 6:{c:"5B",s:"DRA"}, 7:{c:"6A",s:"DRA"}},
+    }
+  },
+  t5: {
+    name: "Shri Bhosale D.B",
+    periods: {
+      monday: {1:null, 2:{c:"10A",s:"SCI"}, 3:{c:"9B",s:"SCI"}, 4:{c:"7B",s:"SCI"}, 5:{c:"10A",s:"SCI"}, 6:{c:"7C",s:"PT"}, 7:{c:"9B",s:"SCI"}, 8:{c:"7C",s:"PT"}},
+      tuesday: {1:null, 2:{c:"7B",s:"SCI"}, 3:null, 4:{c:"10A",s:"SCI"}, 5:{c:"10A",s:"SCI"}, 6:{c:"8A",s:"MATH"}, 7:{c:"10B",s:"SCI1"}, 8:{c:"8A",s:"MATH"}},
+      wednesday: {1:null, 2:{c:"7B",s:"SCI"}, 3:{c:"10B",s:"SCI1"}, 4:{c:"9B",s:"SCI"}, 5:{c:"10C",s:"WS"}, 6:{c:"8A",s:"MATH"}, 7:null, 8:{c:"9B",s:"SCI"}},
+      thursday: {1:null, 2:{c:"7B",s:"SCI"}, 3:null, 4:{c:"7B",s:"SCI"}, 5:{c:"10A",s:"DEF"}, 6:{c:"8A",s:"MATH"}, 7:{c:"10A",s:"SCI"}, 8:{c:"8A",s:"MATH"}},
+      friday: {1:null, 2:{c:"9B",s:"SCI"}, 3:null, 4:{c:"10A",s:"DEF"}, 5:{c:"10A",s:"SCI"}, 6:{c:"10A",s:"SCI"}, 7:{c:"7B",s:"SCI"}, 8:{c:"8A",s:"MATH"}, 9:{c:"10B",s:"SCI1"}},
+      saturday: {1:null, 2:{c:"7B",s:"SCI"}, 3:{c:"9B",s:"SCI"}, 4:{c:"10B",s:"SCI1"}, 5:{c:"8A",s:"MATH"}, 6:{c:"9B",s:"SCI"}, 7:{c:"10A",s:"SCI"}},
+    }
+  },
+  t6: {
+    name: "Shri.Shewale K.R",
+    periods: {
+      monday: {1:{c:"9A",s:"SCI"}, 2:{c:"8A",s:"SCI"}, 3:{c:"10B",s:"SCI2"}, 4:{c:"8A",s:"SCI"}, 5:null, 6:{c:"10C",s:"SCI"}, 7:null, 8:{c:"9A",s:"SCI"}},
+      tuesday: {1:{c:"9A",s:"SCI"}, 2:{c:"10B",s:"SCI2"}, 3:{c:"9C",s:"SCI2"}, 4:{c:"10C",s:"SCI"}, 5:{c:"8A",s:"SCI"}, 6:null, 7:{c:"9A",s:"PT"}, 8:{c:"9C",s:"SCI2"}},
+      wednesday: {1:{c:"9A",s:"SCI"}, 2:{c:"8A",s:"SCI"}, 3:{c:"8B",s:"SCI"}, 4:{c:"10B",s:"SCI2"}, 5:null, 6:{c:"10C",s:"SCI"}, 7:null, 8:{c:"9C",s:"SCI2"}},
+      thursday: {1:{c:"9A",s:"SCI"}, 2:{c:"10C",s:"SCI"}, 3:{c:"8B",s:"SCI"}, 4:{c:"10C",s:"SCI"}, 5:null, 6:{c:"9C",s:"SCI2"}, 7:{c:"10B",s:"SCI2"}, 8:{c:"8B",s:"SCI"}},
+      friday: {1:{c:"9A",s:"SCI"}, 2:{c:"10C",s:"SCI"}, 3:{c:"8B",s:"SCI"}, 4:{c:"10C",s:"SCI"}, 5:{c:"8B",s:"SCI"}, 6:null, 7:{c:"8A",s:"SCI"}, 8:null, 9:{c:"8A",s:"SCI"}},
+      saturday: {1:{c:"9A",s:"SCI"}, 2:null, 3:{c:"8B",s:"SCI"}, 4:null, 5:{c:"8B",s:"SCI"}, 6:{c:"10C",s:"SCI"}, 7:{c:"8A",s:"SCI"}},
+    }
+  },
+  t7: {
+    name: "Shri. Bade D. D.",
+    periods: {
+      monday: {1:null, 2:{c:"7B",s:"MATH"}, 3:null, 4:{c:"8B",s:"MATH"}, 5:{c:"9B",s:"MATH1"}, 6:{c:"9B",s:"MATH1"}, 7:{c:"10A",s:"MATH1"}, 8:null},
+      tuesday: {1:null, 2:{c:"8B",s:"MATH"}, 3:{c:"7B",s:"MATH"}, 4:{c:"8B",s:"MATH"}, 5:{c:"9C",s:"SCI1"}, 6:{c:"7B",s:"MATH"}, 7:{c:"9B",s:"MATH1"}, 8:{c:"10B",s:"MATH1"}},
+      wednesday: {1:null, 2:{c:"10B",s:"MATH1"}, 3:{c:"9C",s:"MATH1"}, 4:{c:"9C",s:"SCI1"}, 5:null, 6:{c:"10A",s:"MATH1"}, 7:{c:"10A",s:"MATH1"}, 8:{c:"7B",s:"MATH"}},
+      thursday: {1:null, 2:{c:"8B",s:"MATH"}, 3:{c:"9C",s:"MATH1"}, 4:{c:"8B",s:"MATH"}, 5:{c:"9C",s:"MATH2"}, 6:{c:"10B",s:"MATH1"}, 7:{c:"10C",s:"MATH1"}, 8:{c:"10B",s:"MATH1"}},
+      friday: {1:null, 2:{c:"9C",s:"SCI1"}, 3:{c:"10A",s:"MATH1"}, 4:{c:"8B",s:"MATH"}, 5:{c:"10C",s:"MATH1"}, 6:{c:"7B",s:"MATH"}, 7:{c:"8B",s:"MATH"}, 8:null, 9:{c:"10C",s:"MATH1"}},
+      saturday: {1:null, 2:{c:"10C",s:"WS"}, 3:{c:"7B",s:"MATH"}, 4:{c:"9C",s:"MATH1"}, 5:{c:"9B",s:"MATH1"}, 6:{c:"7B",s:"MATH"}, 7:{c:"10C",s:"MATH1"}},
+    }
+  },
+  t8: {
+    name: "Sau Shirsath A.S",
+    periods: {
+      monday: {1:{c:"10B",s:"MATH2"}, 2:{c:"8C",s:"SCI"}, 3:{c:"9A",s:"MATH"}, 4:null, 5:{c:"9C",s:"MATH2"}, 6:null, 7:{c:"10C",s:"MATH2"}, 8:{c:"10A",s:"MATH2"}},
+      tuesday: {1:{c:"10B",s:"MATH2"}, 2:{c:"9A",s:"MATH"}, 3:null, 4:{c:"9A",s:"MATH"}, 5:{c:"10C",s:"MATH2"}, 6:{c:"10C",s:"MATH2"}, 7:null, 8:{c:"8C",s:"SCI"}},
+      wednesday: {1:{c:"10B",s:"MATH2"}, 2:{c:"9A",s:"MATH"}, 3:null, 4:{c:"8C",s:"SCI"}, 5:{c:"9C",s:"MATH2"}, 6:{c:"9B",s:"MATH2"}, 7:{c:"9A",s:"MATH"}, 8:{c:"9A",s:"PT"}},
+      thursday: {1:{c:"10B",s:"MATH2"}, 2:null, 3:{c:"9A",s:"MATH"}, 4:{c:"10A",s:"MATH2"}, 5:null, 6:{c:"8C",s:"SCI"}, 7:{c:"9A",s:"MATH"}, 8:{c:"9B",s:"MATH2"}},
+      friday: {1:{c:"10B",s:"WS"}, 2:null, 3:{c:"10C",s:"MATH2"}, 4:null, 5:{c:"8C",s:"SCI"}, 6:{c:"9A",s:"MATH"}, 7:{c:"9C",s:"MATH2"}, 8:{c:"10A",s:"MATH2"}, 9:{c:"9B",s:"MATH2"}},
+      saturday: {1:{c:"10B",s:"WS"}, 2:null, 3:{c:"9C",s:"MATH2"}, 4:{c:"9B",s:"MATH2"}, 5:{c:"8C",s:"SCI"}, 6:{c:"10A",s:"MATH2"}, 7:{c:"8C",s:"SCI"}},
+    }
+  },
+  t9: {
+    name: "Shri.Damale R.B.",
+    periods: {
+      monday: {1:{c:"10C",s:"HIN"}, 2:{c:"9B",s:"SS"}, 3:{c:"10C",s:"GEO"}, 4:null, 5:{c:"10B",s:"HIN"}, 6:null, 7:{c:"9C",s:"SS"}, 8:{c:"9C",s:"SS"}},
+      tuesday: {1:{c:"10C",s:"HIN"}, 2:null, 3:{c:"10C",s:"GEO"}, 4:{c:"10B",s:"HIN"}, 5:null, 6:{c:"10A",s:"HIN"}, 7:{c:"9C",s:"SS"}, 8:{c:"9B",s:"SS"}},
+      wednesday: {1:{c:"10C",s:"HIN"}, 2:{c:"10A",s:"HIN"}, 3:{c:"10C",s:"GEO"}, 4:null, 5:{c:"9B",s:"SS"}, 6:{c:"10B",s:"HIN"}, 7:null, 8:{c:"10A",s:"HIN"}},
+      thursday: {1:{c:"10C",s:"HIN"}, 2:{c:"10A",s:"HIN"}, 3:null, 4:{c:"10B",s:"HIN"}, 5:{c:"9B",s:"SS"}, 6:{c:"9B",s:"SS"}, 7:{c:"9C",s:"SS"}, 8:{c:"9C",s:"SS"}},
+      friday: {1:{c:"10C",s:"HIN"}, 2:null, 3:{c:"9C",s:"SS"}, 4:{c:"10B",s:"HIN"}, 5:null, 6:{c:"9C",s:"DEF"}, 7:{c:"10A",s:"HIN"}, 8:{c:"9B",s:"SS"}, 9:{c:"8C",s:"PT"}},
+      saturday: {1:{c:"10C",s:"HIN"}, 2:{c:"9C",s:"SS"}, 3:{c:"10A",s:"HIN"}, 4:null, 5:{c:"10B",s:"HIN"}, 6:{c:"9C",s:"DEF"}, 7:{c:"9B",s:"SS"}},
+    }
+  },
+  t10: {
+    name: "Shri Shete S.P",
+    periods: {
+      monday: {1:{c:"9C",s:"MAR"}, 2:{c:"10C",s:"MAR"}, 3:{c:"10A",s:"MAR"}, 4:{c:"10C",s:"DEF"}, 5:null, 6:{c:"10A",s:"MAR"}, 7:{c:"5B",s:"EVS2"}, 8:{c:"10C",s:"MAR"}},
+      tuesday: {1:{c:"9C",s:"MAR"}, 2:null, 3:{c:"5B",s:"EVS2"}, 4:null, 5:{c:"7C",s:"HIN"}, 6:{c:"10B",s:"MAR"}, 7:{c:"10C",s:"MAR"}, 8:{c:"7C",s:"HIN"}},
+      wednesday: {1:{c:"9C",s:"MAR"}, 2:null, 3:{c:"7C",s:"HIN"}, 4:{c:"10A",s:"MAR"}, 5:null, 6:{c:"9C",s:"PT"}, 7:{c:"10C",s:"MAR"}, 8:{c:"10B",s:"MAR"}},
+      thursday: {1:{c:"9C",s:"MAR"}, 2:null, 3:{c:"7C",s:"HIN"}, 4:null, 5:{c:"10B",s:"MAR"}, 6:{c:"10A",s:"MAR"}, 7:{c:"5B",s:"EVS2"}, 8:{c:"10A",s:"MAR"}},
+      friday: {1:{c:"9C",s:"MAR"}, 2:{c:"5B",s:"EVS2"}, 3:{c:"10B",s:"MAR"}, 4:null, 5:{c:"5B",s:"EVS2"}, 6:{c:"10C",s:"MAR"}, 7:null, 8:{c:"7C",s:"HIN"}, 9:{c:"10A",s:"MAR"}},
+      saturday: {1:{c:"9C",s:"MAR"}, 2:{c:"10B",s:"MAR"}, 3:{c:"10C",s:"MAR"}, 4:{c:"7C",s:"HIN"}, 5:{c:"10C",s:"DEF"}, 6:null, 7:{c:"10B",s:"MAR"}},
+    }
+  },
+  t11: {
+    name: "Shri Nehul S B",
+    periods: {
+      monday: {1:{c:"6A",s:"MAR"}, 2:{c:"8B",s:"DRA"}, 3:null, 4:{c:"9B",s:"WS"}, 5:{c:"6A",s:"VE"}, 6:{c:"5B",s:"MAR"}, 7:{c:"5A",s:"MAR"}, 8:{c:"5A",s:"MAR"}},
+      tuesday: {1:{c:"6A",s:"MAR"}, 2:null, 3:{c:"9B",s:"WS"}, 4:null, 5:{c:"5A",s:"DRA"}, 6:{c:"8B",s:"DRA"}, 7:{c:"6A",s:"VE"}, 8:{c:"6C",s:"DRA"}},
+      wednesday: {1:{c:"6A",s:"VE"}, 2:{c:"6C",s:"DRA"}, 3:{c:"6C",s:"DRA"}, 4:null, 5:{c:"8C",s:"DRA"}, 6:null, 7:{c:"8A",s:"DRA"}, 8:{c:"5B",s:"MAR"}},
+      thursday: {1:{c:"6A",s:"MAR"}, 2:{c:"5B",s:"MAR"}, 3:null, 4:{c:"6C",s:"DRA"}, 5:{c:"8C",s:"DRA"}, 6:null, 7:{c:"5A",s:"DRA"}, 8:{c:"5A",s:"MAR"}},
+      friday: {1:{c:"6A",s:"VE"}, 2:{c:"5A",s:"MAR"}, 3:null, 4:{c:"8C",s:"DRA"}, 5:{c:"5A",s:"MAR"}, 6:{c:"5B",s:"MAR"}, 7:null, 8:{c:"6A",s:"MAR"}, 9:{c:"5B",s:"MAR"}},
+      saturday: {1:{c:"6A",s:"MAR"}, 2:{c:"5B",s:"MAR"}, 3:{c:"5A",s:"MAR"}, 4:null, 5:{c:"5A",s:"DRA"}, 6:null, 7:{c:"8B",s:"DRA"}},
+    }
+  },
+  t12: {
+    name: "Shri Avhad D.A",
+    periods: {
+      monday: {1:{c:"8A",s:"ENG"}, 2:null, 3:{c:"8B",s:"ENG"}, 4:{c:"5A",s:"MATH"}, 5:{c:"8C",s:"HIN"}, 6:{c:"9A",s:"MAR"}, 7:{c:"8B",s:"ENG"}, 8:{c:"8C",s:"HIN"}},
+      tuesday: {1:{c:"8A",s:"ENG"}, 2:{c:"8A",s:"PT"}, 3:{c:"8A",s:"WE"}, 4:{c:"5A",s:"MATH"}, 5:{c:"8C",s:"HIN"}, 6:null, 7:{c:"5A",s:"MATH"}, 8:null},
+      wednesday: {1:{c:"8A",s:"ENG"}, 2:null, 3:{c:"8C",s:"HIN"}, 4:{c:"9A",s:"MAR"}, 5:{c:"8A",s:"WE"}, 6:{c:"5A",s:"MATH"}, 7:{c:"5A",s:"MATH"}, 8:null},
+      thursday: {1:{c:"8A",s:"ENG"}, 2:{c:"9A",s:"MAR"}, 3:null, 4:{c:"9A",s:"MAR"}, 5:{c:"8A",s:"WE"}, 6:{c:"8B",s:"ENG"}, 7:{c:"8B",s:"ENG"}, 8:null},
+      friday: {1:{c:"8A",s:"ENG"}, 2:{c:"9A",s:"MAR"}, 3:{c:"8C",s:"HIN"}, 4:null, 5:{c:"8A",s:"WE"}, 6:{c:"8B",s:"ENG"}, 7:{c:"5A",s:"MATH"}, 8:{c:"5A",s:"MATH"}, 9:null},
+      saturday: {1:{c:"8A",s:"ENG"}, 2:{c:"8C",s:"HIN"}, 3:{c:"9A",s:"MAR"}, 4:{c:"8B",s:"ENG"}, 5:null, 6:{c:"5A",s:"MATH"}, 7:null},
+    }
+  },
+  t13: {
+    name: "Shri Sadavarte A.B",
+    periods: {
+      monday: {1:{c:"5B",s:"ENG"}, 2:null, 3:{c:"6B",s:"SCI"}, 4:{c:"8C",s:"ENG"}, 5:{c:"8B",s:"HIS"}, 6:null, 7:{c:"6B",s:"SCI"}, 8:{c:"8A",s:"GEO"}},
+      tuesday: {1:{c:"5B",s:"ENG"}, 2:{c:"10A",s:"WS"}, 3:{c:"6B",s:"SCI"}, 4:null, 5:{c:"6B",s:"SCI"}, 6:null, 7:{c:"8B",s:"HIS"}, 8:{c:"10A",s:"WS"}},
+      wednesday: {1:{c:"5B",s:"ENG"}, 2:{c:"8C",s:"ENG"}, 3:{c:"5B",s:"WE"}, 4:null, 5:{c:"6B",s:"SCI"}, 6:{c:"8C",s:"ENG"}, 7:{c:"8B",s:"HIS"}, 8:{c:"8A",s:"HIS"}},
+      thursday: {1:{c:"5B",s:"ENG"}, 2:{c:"8A",s:"GEO"}, 3:{c:"5B",s:"WE"}, 4:null, 5:{c:"6B",s:"SCI"}, 6:null, 7:{c:"8C",s:"ENG"}, 8:{c:"5B",s:"ENG"}},
+      friday: {1:{c:"5B",s:"ENG"}, 2:{c:"8A",s:"GEO"}, 3:{c:"5B",s:"WE"}, 4:{c:"8A",s:"HIS"}, 5:{c:"6B",s:"SCI"}, 6:null, 7:{c:"8C",s:"ENG"}, 8:null, 9:{c:"7A",s:"WE"}},
+      saturday: {1:{c:"5B",s:"ENG"}, 2:{c:"8A",s:"HIS"}, 3:{c:"5B",s:"WE"}, 4:{c:"6B",s:"SCI"}, 5:null, 6:{c:"8C",s:"ENG"}, 7:null},
+    }
+  },
+  t14: {
+    name: "Sau. Palve S.A",
+    periods: {
+      monday: {1:{c:"8B",s:"MAR"}, 2:{c:"6C",s:"HIS"}, 3:{c:"8A",s:"MAR"}, 4:{c:"7C",s:"MAR"}, 5:null, 6:{c:"8A",s:"MAR"}, 7:{c:"8C",s:"MAR"}, 8:{c:"8B",s:"WE"}},
+      tuesday: {1:{c:"8B",s:"MAR"}, 2:{c:"6C",s:"HIS"}, 3:{c:"8C",s:"MAR"}, 4:null, 5:{c:"8B",s:"GUI"}, 6:{c:"8C",s:"MAR"}, 7:null, 8:{c:"8B",s:"WE"}},
+      wednesday: {1:{c:"8B",s:"MAR"}, 2:{c:"7C",s:"MAR"}, 3:null, 4:{c:"7C",s:"MAR"}, 5:{c:"7A",s:"MAR"}, 6:null, 7:{c:"7A",s:"MAR"}, 8:{c:"8C",s:"MAR"}},
+      thursday: {1:{c:"8B",s:"MAR"}, 2:null, 3:{c:"7A",s:"MAR"}, 4:{c:"8A",s:"MAR"}, 5:{c:"7A",s:"MAR"}, 6:{c:"6C",s:"HIS"}, 7:{c:"8A",s:"MAR"}, 8:null},
+      friday: {1:{c:"8B",s:"MAR"}, 2:{c:"8C",s:"MAR"}, 3:{c:"7A",s:"MAR"}, 4:null, 5:{c:"7C",s:"MAR"}, 6:{c:"8A",s:"MAR"}, 7:null, 8:{c:"8C",s:"MAR"}, 9:{c:"7C",s:"MAR"}},
+      saturday: {1:{c:"8B",s:"MAR"}, 2:{c:"7C",s:"MAR"}, 3:null, 4:{c:"8A",s:"MAR"}, 5:{c:"7A",s:"MAR"}, 6:{c:"6C",s:"HIS"}, 7:null},
+    }
+  },
+  t15: {
+    name: "Shri Shinde S.K",
+    periods: {
+      monday: {1:{c:"7C",s:"SCI"}, 2:{c:"7C",s:"WE"}, 3:null, 4:{c:"6A",s:"HIS"}, 5:{c:"9A",s:"HIN"}, 6:{c:"6A",s:"GEO"}, 7:null, 8:{c:"6C",s:"GEO"}},
+      tuesday: {1:{c:"7C",s:"SCI"}, 2:{c:"6A",s:"HIS"}, 3:{c:"7C",s:"PT"}, 4:{c:"7C",s:"WE"}, 5:{c:"9A",s:"HIN"}, 6:{c:"5A",s:"ENG"}, 7:null, 8:{c:"6A",s:"GEO"}},
+      wednesday: {1:{c:"7C",s:"SCI"}, 2:null, 3:{c:"6A",s:"HIS"}, 4:{c:"6A",s:"GEO"}, 5:{c:"5A",s:"ENG"}, 6:{c:"7C",s:"WE"}, 7:null, 8:{c:"5A",s:"ENG"}},
+      thursday: {1:{c:"7C",s:"SCI"}, 2:{c:"6C",s:"GEO"}, 3:null, 4:{c:"6A",s:"HIS"}, 5:{c:"5A",s:"ENG"}, 6:{c:"7C",s:"WE"}, 7:{c:"6A",s:"GEO"}, 8:null},
+      friday: {1:{c:"7C",s:"SCI"}, 2:{c:"6C",s:"GEO"}, 3:{c:"6C",s:"GEO"}, 4:{c:"7C",s:"SCI"}, 5:null, 6:{c:"5A",s:"ENG"}, 7:{c:"9A",s:"HIN"}, 8:null, 9:{c:"9A",s:"HIN"}},
+      saturday: {1:{c:"7C",s:"SCI"}, 2:{c:"5A",s:"ENG"}, 3:null, 4:{c:"5A",s:"ENG"}, 5:{c:"9A",s:"HIN"}, 6:null, 7:{c:"9A",s:"HIN"}},
+    }
+  },
+  t16: {
+    name: "Smt.Kasole S.B",
+    periods: {
+      monday: {1:{c:"8C",s:"MATH"}, 2:{c:"5C",s:"MATH"}, 3:{c:"7A",s:"ENG"}, 4:null, 5:{c:"7B",s:"GEO"}, 6:{c:"8C",s:"WE"}, 7:{c:"9A",s:"WS"}, 8:null},
+      tuesday: {1:{c:"8C",s:"MATH"}, 2:{c:"8C",s:"MATH"}, 3:{c:"9A",s:"WS"}, 4:{c:"5B",s:"MATH"}, 5:{c:"7A",s:"ENG"}, 6:null, 7:{c:"7B",s:"GEO"}, 8:null},
+      wednesday: {1:{c:"8C",s:"MATH"}, 2:{c:"5B",s:"MATH"}, 3:null, 4:{c:"5C",s:"MATH"}, 5:null, 6:{c:"5B",s:"MATH"}, 7:{c:"5C",s:"MATH"}, 8:{c:"7A",s:"ENG"}},
+      thursday: {1:{c:"8C",s:"MATH"}, 2:{c:"7A",s:"ENG"}, 3:null, 4:{c:"5C",s:"MATH"}, 5:{c:"5B",s:"MATH"}, 6:{c:"5C",s:"MATH"}, 7:null, 8:{c:"8C",s:"WE"}},
+      friday: {1:{c:"8C",s:"MATH"}, 2:{c:"7A",s:"ENG"}, 3:{c:"7B",s:"GEO"}, 4:{c:"5C",s:"MATH"}, 5:null, 6:{c:"8C",s:"WE"}, 7:{c:"5B",s:"MATH"}, 8:{c:"5B",s:"MATH"}, 9:null},
+      saturday: {1:{c:"8C",s:"MATH"}, 2:{c:"7A",s:"ENG"}, 3:null, 4:{c:"5C",s:"MATH"}, 5:{c:"5B",s:"MATH"}, 6:{c:"5C",s:"MATH"}, 7:{c:"5B",s:"MATH"}},
+    }
+  },
+  t17: {
+    name: "Shri.Palave M.A",
+    periods: {
+      monday: {1:{c:"5A",s:"HIN"}, 2:null, 3:{c:"8C",s:"HIS"}, 4:null, 5:{c:"6C",s:"HIN"}, 6:{c:"7A",s:"HIN"}, 7:{c:"6C",s:"LIB"}, 8:{c:"7B",s:"HIN"}},
+      tuesday: {1:{c:"5A",s:"HIN"}, 2:{c:"5A",s:"WE"}, 3:{c:"7A",s:"HIN"}, 4:{c:"6A",s:"HIN"}, 5:null, 6:{c:"6A",s:"PT"}, 7:{c:"8C",s:"HIS"}, 8:{c:"7B",s:"HIN"}},
+      wednesday: {1:{c:"5A",s:"HIN"}, 2:{c:"6A",s:"LIB"}, 3:{c:"7B",s:"HIN"}, 4:{c:"5A",s:"WE"}, 5:null, 6:{c:"6A",s:"HIN"}, 7:{c:"8C",s:"HIS"}, 8:null},
+      thursday: {1:{c:"5A",s:"HIN"}, 2:null, 3:{c:"6A",s:"HIN"}, 4:{c:"5A",s:"WE"}, 5:{c:"6C",s:"HIN"}, 6:null, 7:{c:"6C",s:"PT"}, 8:{c:"7B",s:"HIN"}},
+      friday: {1:{c:"5A",s:"HIN"}, 2:{c:"7B",s:"HIN"}, 3:{c:"6A",s:"HIN"}, 4:{c:"5A",s:"WE"}, 5:{c:"7A",s:"HIN"}, 6:{c:"6C",s:"HIN"}, 7:null, 8:{c:"7A",s:"HIN"}, 9:null},
+      saturday: {1:{c:"5A",s:"HIN"}, 2:{c:"6C",s:"HIN"}, 3:null, 4:{c:"7A",s:"HIN"}, 5:{c:"7B",s:"HIN"}, 6:{c:"7A",s:"HIN"}, 7:null},
+    }
+  },
+  t18: {
+    name: "Shri.Shirsath D.R",
+    periods: {
+      monday: {1:null, 2:{c:"5B",s:"HIN"}, 3:{c:"5B",s:"HIN"}, 4:{c:"5C",s:"ENG"}, 5:{c:"5C",s:"PT"}, 6:null, 7:{c:"7C",s:"ENG"}, 8:{c:"5C",s:"ENG"}},
+      tuesday: {1:null, 2:{c:"5C",s:"ENG"}, 3:null, 4:{c:"7B",s:"HIS"}, 5:{c:"9B",s:"MAR"}, 6:{c:"7C",s:"ENG"}, 7:{c:"5B",s:"HIN"}, 8:{c:"7A",s:"HIS"}},
+      wednesday: {1:null, 2:{c:"5C",s:"ENG"}, 3:null, 4:{c:"7A",s:"HIS"}, 5:{c:"7B",s:"PT"}, 6:{c:"5C",s:"ENG"}, 7:{c:"9B",s:"MAR"}, 8:{c:"7C",s:"ENG"}},
+      thursday: {1:null, 2:{c:"9B",s:"MAR"}, 3:{c:"9B",s:"MAR"}, 4:{c:"5B",s:"HIN"}, 5:{c:"7B",s:"HIS"}, 6:{c:"5B",s:"HIN"}, 7:null, 8:{c:"7C",s:"ENG"}},
+      friday: {1:null, 2:{c:"5C",s:"ENG"}, 3:{c:"7C",s:"ENG"}, 4:{c:"5B",s:"HIN"}, 5:{c:"9B",s:"MAR"}, 6:{c:"5C",s:"ENG"}, 7:{c:"7C",s:"ENG"}, 8:{c:"8B",s:"WE"}, 9:{c:"7B",s:"HIS"}},
+      saturday: {1:null, 2:{c:"9B",s:"MAR"}, 3:{c:"7A",s:"HIS"}, 4:{c:"8C",s:"WE"}, 5:null, 6:{c:"8B",s:"WE"}, 7:{c:"7A",s:"WE"}},
+    }
+  },
+  t19: {
+    name: "Shri Nitnath P.R",
+    periods: {
+      monday: {1:{c:"7B",s:"MAR"}, 2:{c:"6B",s:"MATH"}, 3:{c:"7B",s:"WE"}, 4:null, 5:{c:"7A",s:"GEO"}, 6:{c:"8B",s:"HIN"}, 7:{c:"8A",s:"HIN"}, 8:null},
+      tuesday: {1:{c:"7B",s:"MAR"}, 2:null, 3:{c:"8B",s:"HIN"}, 4:{c:"8A",s:"HIN"}, 5:{c:"7B",s:"WE"}, 6:{c:"5C",s:"HIN"}, 7:{c:"8A",s:"HIN"}, 8:null},
+      wednesday: {1:{c:"7B",s:"MAR"}, 2:{c:"7A",s:"GEO"}, 3:{c:"8A",s:"HIN"}, 4:null, 5:{c:"8B",s:"HIN"}, 6:null, 7:{c:"7B",s:"WE"}, 8:{c:"6B",s:"MATH"}},
+      thursday: {1:{c:"7B",s:"MAR"}, 2:{c:"5C",s:"HIN"}, 3:{c:"8A",s:"HIN"}, 4:null, 5:{c:"8B",s:"HIN"}, 6:null, 7:{c:"7B",s:"WE"}, 8:{c:"5C",s:"HIN"}},
+      friday: {1:{c:"7B",s:"MAR"}, 2:{c:"8B",s:"HIN"}, 3:null, 4:{c:"6B",s:"MATH"}, 5:null, 6:{c:"6B",s:"MATH"}, 7:{c:"7A",s:"GEO"}, 8:{c:"5C",s:"HIN"}, 9:{c:"5C",s:"HIN"}},
+      saturday: {1:{c:"7B",s:"MAR"}, 2:{c:"8B",s:"HIN"}, 3:{c:"6B",s:"MATH"}, 4:null, 5:{c:"6B",s:"MATH"}, 6:{c:"8A",s:"HIN"}, 7:{c:"5C",s:"HIN"}},
+    }
+  },
+  t20: {
+    name: "Shri.Garudkar M.J.",
+    periods: {
+      monday: {1:{c:"7A",s:"WE"}, 2:{c:"7A",s:"PT"}, 3:{c:"7C",s:"MATH"}, 4:null, 5:{c:"7C",s:"MATH"}, 6:{c:"5A",s:"EVS2"}, 7:{c:"6A",s:"MATH"}, 8:null},
+      tuesday: {1:{c:"7A",s:"WE"}, 2:{c:"7C",s:"MATH"}, 3:{c:"6C",s:"MATH"}, 4:{c:"7A",s:"MATH"}, 5:null, 6:{c:"7A",s:"MATH"}, 7:{c:"7C",s:"MATH"}, 8:null},
+      wednesday: {1:{c:"7A",s:"MATH"}, 2:{c:"9C",s:"WS"}, 3:{c:"7A",s:"MATH"}, 4:{c:"8B",s:"SCO"}, 5:{c:"7C",s:"MATH"}, 6:{c:"6C",s:"MATH"}, 7:null, 8:{c:"6A",s:"MATH"}},
+      thursday: {1:{c:"7A",s:"MATH"}, 2:{c:"6A",s:"MATH"}, 3:{c:"5A",s:"EVS2"}, 4:{c:"7C",s:"MATH"}, 5:null, 6:{c:"5A",s:"EVS2"}, 7:null, 8:{c:"6C",s:"MATH"}},
+      friday: {1:{c:"7A",s:"MATH"}, 2:null, 3:{c:"5A",s:"EVS2"}, 4:{c:"6A",s:"MATH"}, 5:{c:"9C",s:"WS"}, 6:{c:"6A",s:"MATH"}, 7:{c:"6C",s:"MATH"}, 8:null, 9:{c:"6C",s:"MATH"}},
+      saturday: {1:{c:"7A",s:"MATH"}, 2:null, 3:{c:"6C",s:"MATH"}, 4:{c:"6A",s:"MATH"}, 5:null, 6:{c:"7C",s:"MATH"}, 7:{c:"5A",s:"EVS2"}},
+    }
+  },
+  t21: {
+    name: "Shri.Akolkar P.A.",
+    periods: {
+      monday: {1:{c:"5C",s:"EVS1"}, 2:null, 3:{c:"6C",s:"PT"}, 4:{c:"7A",s:"SCI"}, 5:null, 6:{c:"6C",s:"SCI"}, 7:{c:"5C",s:"WE"}, 8:{c:"7A",s:"SCI"}},
+      tuesday: {1:{c:"5C",s:"EVS1"}, 2:{c:"7A",s:"SCI"}, 3:{c:"6A",s:"SCI"}, 4:{c:"6C",s:"SCI"}, 5:{c:"6A",s:"SCI"}, 6:null, 7:{c:"6C",s:"SCI"}, 8:null},
+      wednesday: {1:{c:"5C",s:"EVS1"}, 2:{c:"8B",s:"GEO"}, 3:null, 4:{c:"6C",s:"SCI"}, 5:{c:"6A",s:"SCI"}, 6:null, 7:{c:"6C",s:"SCI"}, 8:{c:"8B",s:"GEO"}},
+      thursday: {1:{c:"5C",s:"WE"}, 2:null, 3:{c:"6C",s:"SCI"}, 4:null, 5:{c:"6A",s:"SCI"}, 6:{c:"7A",s:"SCI"}, 7:{c:"5C",s:"EVS1"}, 8:{c:"7A",s:"SCI"}},
+      friday: {1:{c:"5C",s:"EVS1"}, 2:{c:"6A",s:"SCI"}, 3:null, 4:{c:"7A",s:"SCI"}, 5:{c:"6A",s:"SCI"}, 6:{c:"7A",s:"SCI"}, 7:{c:"5C",s:"WE"}, 8:{c:"6C",s:"SCI"}, 9:{c:"8B",s:"GEO"}},
+      saturday: {1:{c:"5C",s:"EVS1"}, 2:{c:"5C",s:"EVS1"}, 3:{c:"6A",s:"SCI"}, 4:null, 5:{c:"6A",s:"SCI"}, 6:null, 7:{c:"6C",s:"SCI"}},
+    }
+  },
+  t22: {
+    name: "Sau.Akolkar G.P",
+    periods: {
+      monday: {1:{c:"6C",s:"ENG"}, 2:{c:"6A",s:"PT"}, 3:{c:"5C",s:"MAR"}, 4:{c:"6C",s:"VE"}, 5:null, 6:{c:"7B",s:"ENG"}, 7:null, 8:{c:"6A",s:"ENG"}},
+      tuesday: {1:{c:"6C",s:"ENG"}, 2:null, 3:{c:"5C",s:"MAR"}, 4:null, 5:{c:"5C",s:"EVS2"}, 6:{c:"6C",s:"VE"}, 7:{c:"5C",s:"EVS2"}, 8:{c:"5C",s:"MAR"}},
+      wednesday: {1:{c:"6C",s:"ENG"}, 2:null, 3:{c:"5C",s:"MAR"}, 4:{c:"7B",s:"ENG"}, 5:{c:"5C",s:"EVS2"}, 6:null, 7:{c:"6A",s:"ENG"}, 8:{c:"6C",s:"VE"}},
+      thursday: {1:{c:"6C",s:"ENG"}, 2:{c:"7C",s:"HIS"}, 3:{c:"5C",s:"MAR"}, 4:null, 5:{c:"5C",s:"EVS2"}, 6:{c:"7B",s:"ENG"}, 7:{c:"7C",s:"HIS"}, 8:null},
+      friday: {1:{c:"6C",s:"ENG"}, 2:null, 3:{c:"5C",s:"MAR"}, 4:{c:"7B",s:"ENG"}, 5:{c:"5C",s:"EVS2"}, 6:{c:"7C",s:"GEO"}, 7:{c:"6A",s:"ENG"}, 8:{c:"7B",s:"ENG"}, 9:null},
+      saturday: {1:{c:"6C",s:"VE"}, 2:null, 3:{c:"7C",s:"GEO"}, 4:{c:"7B",s:"ENG"}, 5:{c:"7C",s:"GEO"}, 6:{c:"6A",s:"ENG"}, 7:{c:"7C",s:"HIS"}},
+    }
+  },
+  t23: {
+    name: "Sau Gorde A R",
+    periods: {
+      monday: {1:{c:"9B",s:"HIN"}, 2:{c:"9C",s:"HIN"}, 3:null, 4:{c:"10B",s:"GEO"}, 5:{c:"10C",s:"HIS"}, 6:{c:"9C",s:"HIN"}, 7:{c:"10B",s:"HIS"}, 8:null},
+      tuesday: {1:{c:"9B",s:"HIN"}, 2:{c:"9C",s:"HIN"}, 3:{c:"10B",s:"HIS"}, 4:{c:"9C",s:"HIN"}, 5:null, 6:{c:"9B",s:"DEF"}, 7:null, 8:{c:"9A",s:"GEO"}},
+      wednesday: {1:{c:"9B",s:"HIN"}, 2:{c:"10C",s:"HIS"}, 3:{c:"9A",s:"ENG"}, 4:null, 5:{c:"9A",s:"ENG"}, 6:{c:"9A",s:"GEO"}, 7:{c:"10B",s:"HIS"}, 8:{c:"10C",s:"HIS"}},
+      thursday: {1:{c:"9B",s:"HIN"}, 2:{c:"8C",s:"GEO"}, 3:{c:"10C",s:"HIS"}, 4:{c:"8C",s:"GEO"}, 5:null, 6:{c:"9A",s:"ENG"}, 7:null, 8:{c:"9A",s:"ENG"}},
+      friday: {1:{c:"9B",s:"HIN"}, 2:{c:"10B",s:"GEO"}, 3:null, 4:{c:"9C",s:"HIN"}, 5:{c:"9A",s:"ENG"}, 6:{c:"9B",s:"DEF"}, 7:{c:"10B",s:"HIS"}, 8:{c:"9A",s:"ENG"}, 9:null},
+      saturday: {1:{c:"9B",s:"HIN"}, 2:{c:"9A",s:"ENG"}, 3:{c:"8C",s:"GEO"}, 4:{c:"9A",s:"GEO"}, 5:{c:"9C",s:"HIN"}, 6:{c:"10B",s:"GEO"}, 7:null},
+    }
+  },
+};
+
+const teacherOrder = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t8", "t9", "t10", "t11", "t12", "t13", "t14", "t15", "t16", "t17", "t18", "t19", "t20", "t21", "t22", "t23"];
+
+// ---------- वर्गानुसार निर्देशांक (teacherData वरून आपोआप तयार) ----------
+function buildClassIndex(){
+  const idx = {};
+  teacherOrder.forEach(tk=>{
+    const t = teacherData[tk];
+    Object.keys(t.periods).forEach(day=>{
+      const dayPeriods = t.periods[day];
+      Object.keys(dayPeriods).forEach(pnum=>{
+        const info = dayPeriods[pnum];
+        if(!info) return;
+        const cls = info.c;
+        if(!idx[cls]) idx[cls] = {};
+        if(!idx[cls][day]) idx[cls][day] = {};
+        idx[cls][day][pnum] = {t: t.name, s: info.s};
+      });
+    });
+  });
+  return idx;
+}
+const classIndex = buildClassIndex();
+const classOrder = Object.keys(classIndex).sort((a,b)=>{
+  const na = parseInt(a), nb = parseInt(b);
+  if(na!==nb) return na-nb;
+  return a.localeCompare(b);
+});
+
+// ---------- गैरहजर शिक्षक — तास वाटप (substitution engine) ----------
+function scheduleKeyForDay(dayKey){
+  if(dayKey === "friday") return "friday";
+  if(dayKey === "saturday") return "saturday";
+  return "monThu";
+}
+
+function periodNumsForDay(dayKey){
+  return daySchedules[scheduleKeyForDay(dayKey)]
+    .filter(s=>s.type==="period")
+    .map(s=>s.num);
+}
+
+function gradeOf(cls){
+  const m = cls.match(/^\d+/);
+  return m ? m[0] : cls;
+}
+
+function sectionOf(cls){
+  return cls.replace(/^\d+/, "");
+}
+
+// वापरकर्ता स्वतः निवडेल तेच वर्ग (फक्त पाचवी/सातवी/आठवी पैकी, अ+ब तुकडी) एकत्र होतील.
+// क तुकडी आणि नववी-दहावी कधीच एकत्र करू नयेत. सहावी हा पर्याय मुळात दिलेलाच नाही.
+const MERGE_GRADES = ["5", "7", "8"];
+function isMergeEligible(cls, selectedGrades){
+  const sec = sectionOf(cls);
+  return selectedGrades.includes(gradeOf(cls)) && MERGE_GRADES.includes(gradeOf(cls)) && (sec === "A" || sec === "B");
+}
+
+function teacherTeachingAt(dayKey, pnum, cls, absentMap){
+  for(const tk of teacherOrder){
+    if(isAbsentAt(absentMap, tk, pnum)) continue;
+    const dp = teacherData[tk].periods[dayKey];
+    const info = dp && dp[pnum];
+    if(info && info.c === cls) return tk;
+  }
+  return null;
+}
+
+function teachersOffAt(dayKey, pnum, absentMap){
+  return teacherOrder.filter(tk=>{
+    if(isAbsentAt(absentMap, tk, pnum)) return false;
+    const dp = teacherData[tk].periods[dayKey];
+    const info = dp && dp[pnum];
+    return !info;
+  });
+}
+
+// शिक्षक त्या तासाला खरोखर मोकळे आहेत का — म्हणजे त्यांना त्या तासाला मुळात तासच नाही,
+// किंवा त्यांचा तास "वर्ग एकत्र करा" मुळे आज विलीन झालेल्या तुकडीचा आहे (त्यामुळे तो तास प्रत्यक्षात होत नाही).
+// या तपासणीशिवाय आधी एखादा शिक्षक दुसऱ्या वर्गात प्रत्यक्ष तास घेत असतानाही त्याला एक्स्ट्रा तास दिला जात होता.
+function isTeacherFreeAt(tk, dayKey, pnum, mergeEnabled, selectedGrades, affectedGrades, freeSection){
+  const dp = teacherData[tk].periods[dayKey];
+  const info = dp && dp[pnum];
+  if(!info) return true;
+  if(mergeEnabled && affectedGrades.has(gradeOf(info.c)) && isMergeEligible(info.c, selectedGrades) && sectionOf(info.c) === freeSection){
+    return true;
+  }
+  return false;
+}
+
+function offPeriodCountForDay(tk, dayKey){
+  const dp = teacherData[tk].periods[dayKey] || {};
+  let cnt = 0;
+  periodNumsForDay(dayKey).forEach(p=>{ if(!dp[p]) cnt++; });
+  return cnt;
+}
+
+// शिक्षकाला त्या नेमक्या तासाला मुळातच तासच नाही (खऱ्या अर्थाने ऑफ) — वर्ग एकत्रीकरणामुळे मोकळा झालेला तास यात धरला जात नाही.
+function isGenuinelyOffAt(tk, dayKey, pnum){
+  const dp = teacherData[tk].periods[dayKey];
+  return !(dp && dp[pnum]);
+}
+
+// तासिका वाटपाचे नियम (मर्यादा):
+// - कटके सर (t1) यांना दिवसाला जास्तीत जास्त 3 तास दिले जाऊ शकतात.
+// - इतर कोणत्याही शिक्षकाला दिवसाला जास्तीत जास्त 2 तास दिले जाऊ शकतात
+//   (उदा. वर्ग एकत्रीकरणामुळे (R) एक तास आधीच मिळाला असेल, तरी त्याच शिक्षकाला त्याच दिवशी
+//   दुसऱ्या एखाद्या तासाला खरोखर मोकळे असल्यास (E) तासही देता येईल — सगळा भार सतत कटके सरांवरच येऊ नये).
+// - ज्या शिक्षकांना त्या दिवशी 2 किंवा जास्त ऑफ तास आहेत त्यांनाच "ऑफ तास" म्हणून तास दिला जाऊ शकतो,
+//   आणि त्यांनाही दिवसातून जास्तीत जास्त एकदाच (जेणेकरून त्यांना कमीत कमी 1 तास ऑफ शिल्लक राहील).
+// प्रत्येक तासासाठी वाटपाचा क्रम: 1) (R) वर्ग एकत्र झाल्याने मोकळे शिक्षक  2) (E) एक्स्ट्रा तास
+// प्रत्येक रांगेसाठी उपलब्ध असलेले सर्व पर्यायी शिक्षक (candidates) सुद्धा दिले जातात — एकापेक्षा जास्त उपलब्ध असल्यास toggle ने बदलता येते.
+const KATAKE_KEY = "t1";
+function capForTeacher(tk){ return tk === KATAKE_KEY ? 3 : 2; }
+
+// प्रदर्शन व मासिक हिशोबासाठी: फक्त वर्ग-एकत्रीकरणामुळे मोकळ्या झालेल्या तासाला (R) म्हणावे.
+// शिक्षकाच्या स्वतःच्या ऑफ तासात दिलेला तास असो किंवा खरोखर कोणीच उपलब्ध नसताना दिलेला तास असो —
+// दोन्ही शिक्षकासाठी जास्तीचे (एक्स्ट्रा) काम असल्याने (E) असेच मोजले/दाखवले जावे.
+function isExtraLikeType(t){ return t === "extra" || t === "off"; }
+function reportLetter(t){ return t === "regular" ? "R" : "E"; }
+
+function computeSubstitution(dayKey, absentMap, selectedGrades, hostSection, overrides, monthlyExtraCounts, minOffGuarantee){
+  overrides = overrides || {};
+  monthlyExtraCounts = monthlyExtraCounts || {};
+  absentMap = absentMap || {};
+  if(minOffGuarantee === undefined) minOffGuarantee = true;
+  // किमान 1 तास ऑफ राखीव ठेवायचा असेल (डीफॉल्ट) तर शिक्षकाला 2+ ऑफ तास असतील तरच त्याचा एक ऑफ तास एक्स्ट्रा म्हणून वापरता येईल
+  // (जेणेकरून किमान 1 तास ऑफ शिल्लक राहील). हा पर्याय बंद केल्यास शेवटचा ऑफ तासही (गरज पडल्यास) वापरता येईल —
+  // जेणेकरून खूप शिक्षक गैरहजर असताना वर्ग रिकामा राहणार नाही.
+  const minOffThreshold = minOffGuarantee ? 2 : 1;
+  const freeSection = hostSection === "A" ? "B" : "A";
+  const mergeEnabled = selectedGrades && selectedGrades.length > 0;
+
+  // absentMap: { teacherKey: [गैरहजर तास-क्रमांकांची यादी] } — पूर्ण दिवस गैरहजर असल्यास त्या वारचे सर्व तास,
+  // अन्यथा फक्त निवडलेले ठराविक तास (अर्धा दिवस / २-३ तास इ.). त्यामुळे शिक्षक फक्त त्याच्या स्वतःच्या
+  // रजेच्या तासांपुरताच अनुपलब्ध धरला जातो — बाकीच्या तासांना तो शाळेत हजर असल्याने बदली म्हणून वापरता येतो.
+  let rawRows = [];
+  Object.keys(absentMap).forEach(tk=>{
+    const periods = absentMap[tk] || [];
+    if(!periods.length) return;
+    const t = teacherData[tk];
+    const dp = t.periods[dayKey] || {};
+    periods.forEach(pnum=>{
+      const info = dp[pnum];
+      if(!info) return; // या शिक्षकाला हा तास आधीच ऑफ आहे, वाटपाची गरज नाही
+      rawRows.push({ teacherName: t.name, period: pnum, cls: info.c, subj: info.s });
+    });
+  });
+  rawRows.sort((a,b)=> a.period - b.period);
+
+  // वापरकर्त्याने निवडलेली इयत्ता (5वी/7वी/8वी पैकी) एकत्र केली जाईल — गैरहजर शिक्षक स्वतः त्या इयत्तेला शिकवत असेल किंवा नसेल तरीही,
+  // कारण "वर्ग एकत्र करा" टिक केल्यावर ती इयत्ता दिवसभरासाठी एकत्र असते व त्यामुळे मोकळे झालेले शिक्षक कोणत्याही तासाला (R) म्हणून वापरता येतात.
+  const affectedGrades = new Set();
+  if(mergeEnabled){
+    selectedGrades.forEach(g=>{ if(MERGE_GRADES.includes(g)) affectedGrades.add(g); });
+  }
+
+  const usedThisPeriod = {};  // pnum -> Set(teacherKey) आधीच या तासाला दुसरीकडे नेमलेले शिक्षक
+  const dailyAssignedCount = {}; // teacherKey -> आज एकूण किती तास दिले (कोणत्याही प्रकाराचे)
+
+  function remainingCap(tk){ return capForTeacher(tk) - (dailyAssignedCount[tk]||0); }
+
+  const rows = rawRows.map(r=>{
+    // कायमस्वरूपी सूट: सहावी अ/ब चा WE (संगणक) तास वेगळ्या संगणक लॅबमध्ये संगणक शिक्षकांकडून घेतला जातो,
+    // व 6A-6B त्या तासाला आधीच एकत्र असतात — त्यामुळे या तासाला मूळ (गैरहजर) शिक्षकाऐवजी वेगळा शिक्षक देण्याची गरजच नाही.
+    // हा नियम "वर्ग एकत्र करा" टिकबॉक्सशी संबंधित नाही — कायमचा (नेहमी लागू) आहे.
+    const rowKeyEarly = r.period+"_"+r.cls+"_"+r.teacherName;
+    if(gradeOf(r.cls) === "6" && (sectionOf(r.cls) === "A" || sectionOf(r.cls) === "B") && r.subj === "WE"){
+      return { ...r, rowKey: rowKeyEarly, candidates: [], arrangement:{ type:"merged",
+        note:"वर्ग "+r.cls+" चा हा WE (संगणक) तास वेगळ्या संगणक लॅबमध्ये संगणक शिक्षकांकडून घेतला जातो — 6A व 6B त्या तासाला आधीच एकत्र असतात, त्यामुळे वेगळा शिक्षक देण्याची गरज नाही."
+      }};
+    }
+
+    const eligible = mergeEnabled && isMergeEligible(r.cls, selectedGrades) && affectedGrades.has(gradeOf(r.cls));
+    const rowKey = r.period+"_"+r.cls+"_"+r.teacherName;
+
+    // या वर्गाची तुकडी आज 'मोकळ्या' (दुसऱ्या तुकडीत विलीन) तुकडीत असेल तर हा तास स्वतंत्रपणे घ्यावाच लागत नाही
+    if(eligible && sectionOf(r.cls) === freeSection){
+      return { ...r, rowKey, candidates: [], arrangement:{ type:"merged",
+        note:"वर्ग एकत्र केल्यामुळे हा तास वेगळा घेण्याची गरज नाही — वर्ग "+r.cls+" आज दिवसभर तुकडी \""+hostSection+"\" सोबत एकत्र आहे."
+      }};
+    }
+
+    if(!usedThisPeriod[r.period]) usedThisPeriod[r.period] = new Set();
+    const usedSet = usedThisPeriod[r.period];
+
+    let candidates = [];
+
+    // पायरी 1: (R) — वर्ग एकत्र झाल्यामुळे मोकळे झालेले नियमित शिक्षक
+    // हे शिक्षक कोणत्याही गैरहजर शिक्षकाचा तास घेऊ शकतात (फक्त त्यांच्याच इयत्तेपुरते मर्यादित नाही) —
+    // कारण वर्ग एकत्र झाल्यामुळे त्यांना त्या तासाला खरोखर कोणताच वर्ग शिकवायचा नाही.
+    if(mergeEnabled && affectedGrades.size){
+      affectedGrades.forEach(g=>{
+        const freeCls = g + freeSection;
+        const candTk = teacherTeachingAt(dayKey, r.period, freeCls, absentMap);
+        if(candTk && !usedSet.has(candTk) && remainingCap(candTk)>0){
+          candidates.push({ type:"regular", assignedKey: candTk,
+            note:"(R) "+teacherData[candTk].name+" — वर्ग "+freeCls+" आज तुकडी \""+hostSection+"\" सोबत एकत्र असल्याने हा तास मोकळा आहे, त्यामुळे त्यांना हा तास द्यावा."
+          });
+        }
+      });
+    }
+
+
+    // पायरी 2: एक्स्ट्रा तास (R नसेल तरच) — वर्ग एकत्रीकरणामुळे मोकळे झालेले तास (R) उपलब्ध नसतील तरच
+    // समानतेसाठी: ज्यांना या महिन्यात आतापर्यंत सर्वात कमी एक्स्ट्रा तास मिळाले आहेत त्यांना प्रथम प्राधान्य
+    // महत्त्वाचे: ज्यांना त्या तासाला खरोखर तास नाही (किंवा ज्यांचा तास वर्ग एकत्र झाल्याने विलीन झाला आहे) तेच पात्र —
+    // अन्यथा दुसऱ्या वर्गात प्रत्यक्ष तास घेत असलेल्या शिक्षकालाही एक्स्ट्रा तास दिला जाऊ शकत होता (चुकीचे — दुहेरी तास).
+    // तसेच: ज्यांचा हा तास मुळातच (खऱ्या अर्थाने) ऑफ आहे — वर्ग एकत्रीकरणामुळे मोकळा झालेला नाही — त्यांना फक्त
+    // त्या दिवशी 2 किंवा जास्त ऑफ तास असतील तरच एक्स्ट्रा तास द्यावा, जेणेकरून त्यांना कमीत कमी 1 तास ऑफ शिल्लक राहील.
+    const extraCands = teacherOrder.filter(k=>
+      !isAbsentAt(absentMap, k, r.period) && !usedSet.has(k) && remainingCap(k)>0 &&
+      isTeacherFreeAt(k, dayKey, r.period, mergeEnabled, selectedGrades, affectedGrades, freeSection) &&
+      (!isGenuinelyOffAt(k, dayKey, r.period) || offPeriodCountForDay(k, dayKey) >= minOffThreshold)
+    );
+    extraCands.sort((a,b)=>
+      (dailyAssignedCount[a]||0) - (dailyAssignedCount[b]||0) ||
+      (monthlyExtraCounts[a]||0) - (monthlyExtraCounts[b]||0) ||
+      offPeriodCountForDay(b,dayKey) - offPeriodCountForDay(a,dayKey)
+    );
+    extraCands.forEach(k=>{
+      const priorCount = monthlyExtraCounts[k]||0;
+      const reasonPhrase = mergeEnabled
+        ? "या तासाला वर्ग एकत्रीकरणामुळे मोकळा झालेला (R) शिक्षक उपलब्ध नाही"
+        : "या तासाला (R) प्रकारे मोकळा शिक्षक उपलब्ध नाही (वर्ग एकत्रीकरण चालू नाही)";
+      candidates.push({ type:"extra", assignedKey: k, monthlyExtraCount: priorCount,
+        note:"⚠️ "+reasonPhrase+" — "+teacherData[k].name+" यांना एक्स्ट्रा (E) तास द्यावा लागेल. (या महिन्यात आतापर्यंत एकूण एक्स्ट्रा तास: "+priorCount+")"
+      });
+    });
+
+    // एकाच शिक्षकाला एकापेक्षा जास्त वेळा (वेगवेगळ्या पायरीत) सुचवू नये — प्राधान्यक्रमाने पहिलाच ठेवा
+    const seen = new Set();
+    candidates = candidates.filter(c=>{
+      if(seen.has(c.assignedKey)) return false;
+      seen.add(c.assignedKey);
+      return true;
+    });
+
+    // पायरी 1 व 2 मध्ये कोणीही पात्र शिक्षक सापडला नाही, तर हा तास "शिक्षक उपलब्ध नाही" असा दाखवला जातो —
+    // सिस्टीम स्वतःहून वर्ग एकत्र करत नाही किंवा "किमान 1 ऑफ राखीव" नियम बाजूला ठेवत नाही.
+    // त्याऐवजी खाली सुचना-बॉक्समध्ये (🧩) हे दोन्ही पर्याय सुचवले जातात — निर्णय वापरकर्त्यानेच (चेकबॉक्स/टिकमार्क बदलून) घ्यायचा आहे.
+    if(!candidates.length){
+      const arrangement = { type:"unassigned", assignedKey:null,
+        note:"🚫 शिक्षक उपलब्ध नाही — हा वर्ग तासाला मोकळा (रिकामा) राहील. खालील \"🧩 उपाय सुचना\" बॉक्समधील पर्याय वापरून पाहा."
+      };
+      return { ...r, rowKey, candidates: [], arrangement };
+    }
+
+    // वापरकर्त्याने toggle ने आधीच वेगळा शिक्षक निवडला असेल (व तो अजूनही वैध पर्याय असेल) तर तोच वापरा
+    let chosenIdx = 0;
+    if(overrides[rowKey]){
+      const idx = candidates.findIndex(c=> c.assignedKey === overrides[rowKey]);
+      if(idx >= 0) chosenIdx = idx;
+    }
+    const chosen = candidates[chosenIdx];
+
+    usedSet.add(chosen.assignedKey);
+    dailyAssignedCount[chosen.assignedKey] = (dailyAssignedCount[chosen.assignedKey]||0) + 1;
+
+    return { ...r, rowKey, candidates, arrangement: chosen };
+  });
+
+  return rows;
+}
+
+// आज (त्या दिवशी) प्रत्येक हजर शिक्षकाला — वर्ग एकत्रीकरणामुळे मोकळे झालेले तास धरून — एकूण किती तास मोकळे होते,
+// आणि त्यातले किती तास त्यांना वाटप (R/E) म्हणून प्रत्यक्ष द्यावे लागले — यावरून शिल्लक ऑफ तास काढतो.
+function computeOffCounts(dayKey, absentMap, selectedGrades, hostSection, rows){
+  absentMap = absentMap || {};
+  const freeSection = hostSection === "A" ? "B" : "A";
+  const mergeEnabled = selectedGrades && selectedGrades.length > 0;
+  const affectedGrades = new Set();
+  if(mergeEnabled){
+    selectedGrades.forEach(g=>{ if(MERGE_GRADES.includes(g)) affectedGrades.add(g); });
+  }
+
+  const usedCount = {}; // teacherKey -> आज त्यांना वाटप म्हणून किती तास प्रत्यक्ष दिले
+  rows.forEach(r=>{
+    if(r.arrangement && r.arrangement.assignedKey){
+      usedCount[r.arrangement.assignedKey] = (usedCount[r.arrangement.assignedKey]||0) + 1;
+    }
+  });
+
+  // जो शिक्षक आज (या वारी) असलेले त्याचे सर्व तास गैरहजर-यादीत आहेत — तो पूर्ण दिवस गैरहजर आहे,
+  // त्याला या "किती तास ऑफ उरले" यादीत दाखवायची गरज नाही. अंशतः (काही तासच) गैरहजर असलेला
+  // शिक्षक मात्र यादीत राहील — फक्त त्याच्या स्वतःच्या रजेच्या तासांना "मोकळे" धरले जाणार नाही.
+  const fullyAbsentTk = new Set(
+    teacherOrder.filter(tk=>{
+      const absentPeriods = absentMap[tk];
+      if(!absentPeriods || !absentPeriods.length) return false;
+      const dp = teacherData[tk].periods[dayKey] || {};
+      const teaching = periodNumsForDay(dayKey).filter(p=> dp[p]);
+      return teaching.length>0 && teaching.every(p=> absentPeriods.includes(p));
+    })
+  );
+
+  const list = teacherOrder
+    .filter(tk=> !fullyAbsentTk.has(tk))
+    .map(tk=>{
+      let freeCount = 0;
+      periodNumsForDay(dayKey).forEach(pnum=>{
+        if(isAbsentAt(absentMap, tk, pnum)) return; // या तासाला स्वतः रजेवर — तो तास "मोकळा" म्हणून मोजू नये
+        if(isTeacherFreeAt(tk, dayKey, pnum, mergeEnabled, selectedGrades, affectedGrades, freeSection)) freeCount++;
+      });
+      const used = usedCount[tk] || 0;
+      return { key:tk, name: teacherData[tk].name, freeCount, used, remaining: freeCount - used };
+    });
+  list.sort((a,b)=> b.remaining - a.remaining || a.name.localeCompare(b.name));
+  return list;
+}
+
+// पहिल्या तासापासून शेवटच्या तासापर्यंत — शाळेतील *सर्व* वर्गांवर कोणता शिक्षक आहे, याचा छोटा quick-reference बॉक्स.
+// जिथे मूळ शिक्षक गैरहजर असल्याने दुसरा शिक्षक पाठवला आहे, तो चिप वेगळ्या (ठळक) रंगात दाखवला जातो.
+function computePeriodRoster(dayKey, rows){
+  const rowMap = {};
+  rows.forEach(r=>{ rowMap[r.period+"_"+r.cls] = r; });
+
+  return periodNumsForDay(dayKey).map(p=>{
+    const items = classOrder.map(cls=>{
+      const info = classIndex[cls] && classIndex[cls][dayKey] && classIndex[cls][dayKey][p];
+      if(!info) return null; // या तासाला या वर्गाला मुळात तासच नाही (वेळापत्रकात नाही)
+      const row = rowMap[p+"_"+cls];
+      if(!row){
+        return { cls, teacherName: info.t, subj: info.s, kind:"normal" };
+      }
+      if(row.arrangement.type === "merged"){
+        return { cls, teacherName: info.t, subj: info.s, kind:"merged" };
+      }
+      if(row.arrangement.type === "unassigned"){
+        return { cls, teacherName: null, subj: info.s, kind:"empty", origTeacher: info.t };
+      }
+      const subName = row.arrangement.assignedKey ? teacherData[row.arrangement.assignedKey].name : info.t;
+      return { cls, teacherName: subName, subj: info.s, kind:"substituted", origTeacher: info.t };
+    }).filter(Boolean);
+    return { period: p, items };
+  });
+}
+
+function renderPeriodRoster(list){
+  const el = document.getElementById("periodRoster");
+  if(!el) return;
+  if(!list || !list.length){ el.innerHTML = ""; return; }
+  const periodsHtml = list.map(p=>{
+    const chips = p.items.map(it=>{
+      if(it.kind === "merged"){
+        return '<span class="roster-chip chip-merged">'+it.cls+' — 🔗 '+it.teacherName+' एकत्र ('+it.subj+')</span>';
+      }
+      if(it.kind === "empty"){
+        return '<span class="roster-chip chip-empty">'+it.cls+' — 🚫 कोणी नाही ('+it.subj+')</span>';
+      }
+      if(it.kind === "substituted"){
+        return '<span class="roster-chip chip-sub" title="मूळ शिक्षक: '+it.origTeacher+'">'+it.cls+' → <b>'+it.teacherName+'</b> 🔁 ('+it.subj+')</span>';
+      }
+      return '<span class="roster-chip">'+it.cls+' → '+it.teacherName+' ('+it.subj+')</span>';
+    }).join("");
+    return '<div class="roster-period"><div class="roster-period-label">तास '+p.period+'</div>'+
+      '<div class="roster-chip-row">'+chips+'</div></div>';
+  }).join("");
+  el.innerHTML = '<div class="period-roster"><h3>📋 तास-निहाय — सर्व वर्गांवरील शिक्षक <span class="live-tag">LIVE</span></h3>'+
+    '<div class="roster-hint">🔴 लाल चिप = आज बदलून (substitute) दिलेला शिक्षक &nbsp;|&nbsp; 🟡 पिवळा चिप = वर्ग एकत्रीकरणामुळे मोकळा झालेला शिक्षक &nbsp;|&nbsp; साधा चिप = नेहमीचा शिक्षक</div>'+
+    periodsHtml+
+  '</div>';
+}
+
+
+// ---------- नवीन वेळापत्रक (वर्गानुसार / शिक्षकानुसार) — गैरहजर वजा करून अंतिम रूप ----------
+let lastComputedRows = [];
+
+function buildSubRowMap(rows){
+  const m = {};
+  rows.forEach(r=>{ m[r.period+"_"+r.cls] = r; });
+  return m;
+}
+
+function populateNewttClassSelect(){
+  const sel = document.getElementById("newttClassSelect");
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = "";
+  classOrder.forEach(cls=>{
+    const opt = document.createElement("option");
+    opt.value = cls;
+    opt.textContent = "वर्ग " + cls;
+    sel.appendChild(opt);
+  });
+  if(prev && classOrder.includes(prev)) sel.value = prev;
+}
+
+function populateNewttTeacherSelect(dayKey, absentMap){
+  const sel = document.getElementById("newttTeacherSelect");
+  if(!sel) return;
+  absentMap = absentMap || {};
+  const prev = sel.value;
+  sel.innerHTML = "";
+  teacherOrder.forEach(key=>{
+    const opt = document.createElement("option");
+    opt.value = key;
+    let tag = "";
+    const absentPeriods = absentMap[key];
+    if(absentPeriods && absentPeriods.length){
+      const dp = dayKey ? (teacherData[key].periods[dayKey] || {}) : {};
+      const teaching = dayKey ? periodNumsForDay(dayKey).filter(p=> dp[p]) : [];
+      tag = (teaching.length && absentPeriods.length < teaching.length) ? " (आज अंशतः गैरहजर)" : " (आज गैरहजर)";
+    }
+    opt.textContent = teacherData[key].name + tag;
+    sel.appendChild(opt);
+  });
+  if(prev && teacherOrder.includes(prev)) sel.value = prev;
+}
+
+function renderNewttRowsHTML(slots, dayKey, cellBuilder){
+  return slots.map(slot=>{
+    const timeStr = fmt12(slot.start)+" - "+fmt12(slot.end);
+    if(slot.type === "prayer"){
+      return '<div class="row prayer"><div class="time">'+timeStr+'</div><div class="label">🙏 '+slot.label+'</div></div>';
+    }
+    if(slot.type === "break"){
+      return '<div class="row break"><div class="time">'+timeStr+'</div><div class="label">☕ '+slot.label+'</div></div>';
+    }
+    if(slot.type === "duty"){
+      return '<div class="row duty"><div class="time">'+timeStr+'</div><div class="label">🚪 '+slot.label+'</div></div>';
+    }
+    const cell = cellBuilder(slot.num);
+    return '<div class="row '+cell.rowClass+'"><div class="time">'+timeStr+'</div><div class="label">तास '+slot.num+'</div>'+
+      '<span class="class-tag">'+cell.tag+'</span></div>';
+  }).join("");
+}
+
+function renderNewttForClass(dayKey, cls, rows){
+  const rowMap = buildSubRowMap(rows);
+  const slots = daySchedules[scheduleKeyForDay(dayKey)];
+  const html = renderNewttRowsHTML(slots, dayKey, (pnum)=>{
+    const info = classIndex[cls] && classIndex[cls][dayKey] && classIndex[cls][dayKey][pnum];
+    if(!info) return { rowClass:"tt-off", tag:"तासच नाही" };
+    const row = rowMap[pnum+"_"+cls];
+    if(!row) return { rowClass:"", tag: info.t+" ("+info.s+")" };
+    if(row.arrangement.type === "merged") return { rowClass:"tt-merged", tag:"🔗 वर्ग एकत्र ("+info.s+")" };
+    if(row.arrangement.type === "unassigned") return { rowClass:"tt-empty", tag:"🚫 शिक्षक उपलब्ध नाही" };
+    const subName = row.arrangement.assignedKey ? teacherData[row.arrangement.assignedKey].name : info.t;
+    return { rowClass:"tt-sub", tag: subName+" 🔁 ("+info.s+") — मूळ: "+row.teacherName };
+  });
+  document.getElementById("newttRows").innerHTML =
+    '<div class="day-table" style="max-width:none; margin:0; padding:0;">'+html+'</div>';
+}
+
+function renderNewttForTeacher(dayKey, tk, rows, params){
+  const rowMap = buildSubRowMap(rows);
+  const slots = daySchedules[scheduleKeyForDay(dayKey)];
+  const absentMap = params.absentMap || {};
+  const mergeEnabled = params.selectedGrades && params.selectedGrades.length > 0;
+  const affectedGrades = new Set();
+  if(mergeEnabled) params.selectedGrades.forEach(g=>{ if(MERGE_GRADES.includes(g)) affectedGrades.add(g); });
+  const freeSection = params.hostSection === "A" ? "B" : "A";
+
+  const html = renderNewttRowsHTML(slots, dayKey, (pnum)=>{
+    // पायरी 1: हा शिक्षक आज कुठे बदली (substitute) म्हणून नेमला गेला आहे का ते तपासा
+    const subAssignment = rows.find(r=> r.period===pnum && r.arrangement && r.arrangement.assignedKey === tk);
+    if(subAssignment){
+      return { rowClass:"tt-sub", tag:"🔁 वर्ग "+subAssignment.cls+" — बदली तास (मूळ: "+subAssignment.teacherName+")" };
+    }
+    const info = teacherData[tk].periods[dayKey] && teacherData[tk].periods[dayKey][pnum];
+    // पायरी 2: याच नेमक्या तासाला हा शिक्षक स्वतः रजेवर आहे का — (पूर्ण दिवस किंवा फक्त हाच तास/तास)
+    if(isAbsentAt(absentMap, tk, pnum)){
+      if(info){
+        const row = rowMap[pnum+"_"+info.c];
+        if(row){
+          if(row.arrangement.type === "merged") return { rowClass:"tt-merged", tag:"🔗 वर्ग "+info.c+" — आज एकत्र (गैरहजर)" };
+          if(row.arrangement.type === "unassigned") return { rowClass:"tt-empty", tag:"🚫 वर्ग "+info.c+" — शिक्षक न मिळाल्याने रिकामा" };
+          const subName = row.arrangement.assignedKey ? teacherData[row.arrangement.assignedKey].name : "?";
+          return { rowClass:"tt-off", tag:"वर्ग "+info.c+" — आज "+subName+" घेत आहेत (हे रजेवर आहेत)" };
+        }
+      }
+      return { rowClass:"tt-off", tag:"आज रजेवर (गैरहजर)" };
+    }
+    if(!info) return { rowClass:"tt-off", tag:"ऑफ तास" };
+    const freedByMerge = mergeEnabled && affectedGrades.has(gradeOf(info.c)) && isMergeEligible(info.c, params.selectedGrades) && sectionOf(info.c) === freeSection;
+    if(freedByMerge) return { rowClass:"tt-merged", tag:"🔗 वर्ग "+info.c+" आज एकत्र — हा तास मोकळा" };
+    return { rowClass:"", tag: info.c+" ("+info.s+")" };
+  });
+  document.getElementById("newttRows").innerHTML =
+    '<div class="day-table" style="max-width:none; margin:0; padding:0;">'+html+'</div>';
+}
+
+function renderNewTimetable(){
+  const panel = document.getElementById("newttPanel");
+  if(!panel) return;
+  if(!lastGenParams || !lastComputedRows.length){
+    panel.style.display = "none";
+    return;
+  }
+  panel.style.display = "";
+  const modeEl = document.querySelector('input[name="newttMode"]:checked');
+  const newttMode = modeEl ? modeEl.value : "class";
+  document.getElementById("newttClassPicker").style.display = newttMode === "class" ? "" : "none";
+  document.getElementById("newttTeacherPicker").style.display = newttMode === "teacher" ? "" : "none";
+  const { dayKey } = lastGenParams;
+  if(newttMode === "class"){
+    const cls = document.getElementById("newttClassSelect").value || classOrder[0];
+    renderNewttForClass(dayKey, cls, lastComputedRows);
+  } else {
+    const tk = document.getElementById("newttTeacherSelect").value || teacherOrder[0];
+    renderNewttForTeacher(dayKey, tk, lastComputedRows, lastGenParams);
+  }
+}
+
+function computePeriodSummary(rows){
+  const map = {}; // pnum -> {needed, covered, empty, mergedAway}
+  rows.forEach(r=>{
+    if(!map[r.period]) map[r.period] = { period:r.period, needed:0, covered:0, empty:0, mergedAway:0 };
+    const m = map[r.period];
+    if(r.arrangement.type === "merged"){
+      m.mergedAway++;
+    } else {
+      m.needed++;
+      if(r.arrangement.type === "unassigned") m.empty++;
+      else m.covered++;
+    }
+  });
+  return Object.values(map).sort((a,b)=> a.period-b.period);
+}
+
+function renderPeriodSummary(list, teacherStats){
+  const el = document.getElementById("periodSummary");
+  if(!el) return;
+  if(!list || !list.length){ el.innerHTML = ""; return; }
+  let totalNeeded=0, totalCovered=0, totalEmpty=0;
+  let rowsHtml = list.map(m=>{
+    totalNeeded += m.needed; totalCovered += m.covered; totalEmpty += m.empty;
+    const emptyCls = m.empty > 0 ? "psum-empty" : "psum-empty zero";
+    return '<tr><td>तास '+m.period+'</td><td>'+m.needed+'</td><td>'+m.covered+'</td><td class="'+emptyCls+'">'+m.empty+'</td></tr>';
+  }).join("");
+  const statsLine = teacherStats
+    ? '<div class="period-summary-stats">आज एकूण शिक्षक: <b>'+teacherStats.total+'</b> &nbsp;|&nbsp; गैरहजर: <b>'+teacherStats.absent+'</b> &nbsp;|&nbsp; उपस्थित: <b>'+teacherStats.present+'</b></div>'
+    : '';
+  let html = '<div class="period-summary"><h3>📊 प्रत्येक तासिकेला वर्ग-वाटप <span class="live-tag">LIVE</span></h3>'+
+    statsLine+
+    '<table><thead><tr><th>तास</th><th>एकूण वर्ग</th><th>शिक्षक दिले</th><th>वर्ग मोकळे</th></tr></thead><tbody>'+
+    rowsHtml+
+    '</tbody><tfoot><tr><td>एकूण</td><td>'+totalNeeded+'</td><td>'+totalCovered+'</td><td class="'+(totalEmpty>0?'psum-empty':'psum-empty zero')+'">'+totalEmpty+'</td></tr></tfoot></table>'+
+  '</div>';
+  el.innerHTML = html;
+}
+
+
+function computeDiagnosis(dayKey, absentKeys, selectedGrades, minOffGuarantee, rows){
+  const unassignedRows = rows.filter(r=> r.arrangement && r.arrangement.type === "unassigned");
+  if(!unassignedRows.length) return null;
+
+  const totalClasses = classOrder.length;
+  const totalTeachers = teacherOrder.length;
+  const absentCount = absentKeys.length;
+  const presentTeachers = totalTeachers - absentCount;
+
+  const periodMap = {};
+  unassignedRows.forEach(r=>{
+    if(!periodMap[r.period]) periodMap[r.period] = [];
+    periodMap[r.period].push(r.cls);
+  });
+  const periodLines = Object.keys(periodMap)
+    .sort((a,b)=> a-b)
+    .map(p=> "तास "+p+" — वर्ग "+periodMap[p].join(", "));
+
+  const suggestions = [];
+  const notSelected = MERGE_GRADES.filter(g=> !(selectedGrades||[]).includes(g));
+  if(notSelected.length){
+    suggestions.push("🔗 वर्ग एकत्र करा: "+notSelected.map(g=>g+"वी").join(", ")+" या इयत्तेतील अ/ब तुकडी वरच्या पर्यायात टिक करून एकत्र करा — त्यामुळे त्या तासांना अतिरिक्त शिक्षक मोकळे होतील (R).");
+  }
+  if(minOffGuarantee){
+    suggestions.push("⚙️ \"सर्वांना किमान १ तास ऑफ राखीव ठेवा\" हा पर्याय बंद करून पुन्हा \"तास वाटप तयार करा\" दाबून पाहा — यामुळे आणखी शिक्षक उपलब्ध होऊ शकतात.");
+  }
+  suggestions.push("👥 अगदीच पर्याय नसेल, तर शेजारील वर्गात तात्पुरते विद्यार्थी बसवून एकाच शिक्षकाकडे दोन वर्ग एकत्र सोपवा (तात्पुरती सोय).");
+  suggestions.push("🏫 शक्य असल्यास मुख्याध्यापक/शिपाई/ग्रंथपाल यांसारख्या इतर उपलब्ध व्यक्तीची तात्पुरती नेमणूक करा.");
+
+  return {
+    totalClasses, totalTeachers, absentCount, presentTeachers,
+    unassignedCount: unassignedRows.length,
+    periodLines, suggestions
+  };
+}
+
+function renderDiagnosisBox(diag){
+  const el = document.getElementById("diagnosisBox");
+  if(!el) return;
+  if(!diag){ el.innerHTML = ""; return; }
+  const shortfall = diag.totalClasses - diag.presentTeachers;
+  const reasonLine = shortfall > 0
+    ? "आज एकूण वर्ग: "+diag.totalClasses+", एकूण शिक्षक: "+diag.totalTeachers+", गैरहजर: "+diag.absentCount+" → उपस्थित शिक्षक फक्त "+diag.presentTeachers+" उरतात, म्हणजे सर्व वर्ग भरण्यासाठी साधारण "+shortfall+" शिक्षक कमी पडत आहेत."
+    : "आज एकूण वर्ग: "+diag.totalClasses+", एकूण शिक्षक: "+diag.totalTeachers+", गैरहजर: "+diag.absentCount+", उपस्थित: "+diag.presentTeachers+" — तरीही काही ठराविक तासांना नेमके तेवढेच शिक्षक दुसरीकडे व्यस्त असल्याने जुळत नाही.";
+
+  let html = '<div class="diagnosis-box">'+
+    '<h3>🧩 तास का बसत नाहीत? — कारण व उपाय</h3>'+
+    '<div class="diagnosis-stats">'+
+      '<span>एकूण वर्ग: <b>'+diag.totalClasses+'</b></span>'+
+      '<span>एकूण शिक्षक: <b>'+diag.totalTeachers+'</b></span>'+
+      '<span>आज गैरहजर: <b>'+diag.absentCount+'</b></span>'+
+      '<span>उपस्थित शिक्षक: <b>'+diag.presentTeachers+'</b></span>'+
+    '</div>'+
+    '<div class="diagnosis-reason">'+reasonLine+'</div>'+
+    '<div class="diagnosis-periods"><b>🚫 शिक्षक न मिळालेले तास ('+diag.unassignedCount+'):</b><br>'+diag.periodLines.join("<br>")+'</div>'+
+    '<h4>💡 उपाय सुचना:</h4>'+
+    '<ul>'+diag.suggestions.map(s=>'<li>'+s+'</li>').join("")+'</ul>'+
+  '</div>';
+  el.innerHTML = html;
+}
+function renderOffSummary(list){
+  const el = document.getElementById("offSummary");
+  if(!el) return;
+  if(!list || !list.length){ el.innerHTML = ""; return; }
+  let html = '<div class="off-summary"><h3>📋 आज कोणाला किती तास ऑफ (मोकळे) उरले</h3>'+
+    '<table><thead><tr><th>शिक्षक</th><th class="num">मोकळे तास</th><th class="num">वाटप झालेले</th><th class="num">शिल्लक ऑफ</th></tr></thead><tbody>';
+  list.forEach(r=>{
+    html += '<tr><td class="off-name">'+r.name+'</td><td class="num">'+r.freeCount+'</td><td class="num">'+r.used+'</td><td class="num">'+r.remaining+'</td></tr>';
+  });
+  html += '</tbody></table></div>';
+  el.innerHTML = html;
+}
+
+function renderSubResults(rows, sortOpt){
+  const el = document.getElementById("subResults");
+  el.innerHTML = "";
+  if(!rows.length){
+    el.innerHTML = '<div class="sub-empty">गैरहजर शिक्षक निवडा, किंवा निवडलेल्या शिक्षकांना त्या दिवशी तासच नाहीत.</div>';
+    return;
+  }
+  const sorted = rows.slice();
+  if(sortOpt === "teacher"){
+    sorted.sort((a,b)=> a.teacherName.localeCompare(b.teacherName) || a.period-b.period);
+  } else {
+    sorted.sort((a,b)=> a.period-b.period || a.teacherName.localeCompare(b.teacherName));
+  }
+  const badges = { regular:"(R)", merged:"🔗", extra:"⚠️", unassigned:"🚫" };
+
+  const unassignedRows = sorted.filter(r=> r.arrangement.type === "unassigned");
+  if(unassignedRows.length){
+    const items = unassignedRows
+      .slice()
+      .sort((a,b)=> a.period-b.period)
+      .map(r=> "तास "+r.period+" — वर्ग "+r.cls)
+      .join(" | ");
+    const banner = document.createElement("div");
+    banner.className = "unassigned-banner";
+    banner.innerHTML = "🚫 शिक्षक उपलब्ध नाही — या "+unassignedRows.length+" तासांना वर्ग मोकळा (रिकामा) राहील:<br>"+items;
+    el.appendChild(banner);
+  }
+
+  sorted.forEach(r=>{
+    const div = document.createElement("div");
+    div.className = "sub-card sub-"+r.arrangement.type;
+    let html =
+      '<div class="sub-head">'+(badges[r.arrangement.type]||"")+' तास '+r.period+' — वर्ग '+r.cls+' ('+r.subj+')'+
+      '<span class="sub-absent">गैरहजर: '+r.teacherName+'</span></div>'+
+      '<div class="sub-body">'+r.arrangement.note+'</div>';
+    if(r.candidates && r.candidates.length > 1){
+      const opts = r.candidates.map(c=>{
+        const extraTag = isExtraLikeType(c.type) ? "E — महिन्यात आतापर्यंत: "+(c.monthlyExtraCount||0) : "R";
+        return '<option value="'+c.assignedKey+'"'+(c.assignedKey===r.arrangement.assignedKey ? ' selected':'')+'>'+
+        teacherData[c.assignedKey].name+' ('+extraTag+')</option>';
+      }).join("");
+      html += '<div class="sub-toggle-row"><label>🔁 दुसरा शिक्षक निवडा:'+
+        '<select class="subToggleSel" data-rowkey="'+r.rowKey+'">'+opts+'</select></label></div>';
+    }
+    div.innerHTML = html;
+    el.appendChild(div);
+  });
+  document.querySelectorAll(".subToggleSel").forEach(sel=>{
+    sel.addEventListener("change", (e)=>{
+      onToggleChange(e.target.dataset.rowkey, e.target.value);
+    });
+  });
+}
+
+// शिक्षक "गैरहजर" टिक केल्यावर — तो पूर्ण दिवस गैरहजर आहे की फक्त काही ठराविक तासच (उदा. अर्धा दिवस / २-३ तास)
+// हे निवडण्याची सोय. दिवस (वार) बदलल्यास त्या वारचे प्रत्यक्ष तास-क्रमांक दाखवण्यासाठी ही यादी त्या वारानुसार पुन्हा तयार होते.
+function populateTeacherCheckboxes(){
+  const box = document.getElementById("teacherCheckboxes");
+
+  // दिवस बदलला तरी "कोण गैरहजर आहे" व "पूर्ण दिवस / अंशतः" ही निवड शक्य तितकी जपून ठेवतो
+  const prevChecked = new Set(
+    Array.from(box.querySelectorAll(".absentCb:checked")).map(cb=>cb.value)
+  );
+  const prevFullDay = {};
+  box.querySelectorAll(".teacher-check-item").forEach(item=>{
+    const tk = item.dataset.tkey;
+    const fullCb = item.querySelector(".fullDayCb");
+    if(tk && fullCb) prevFullDay[tk] = fullCb.checked;
+  });
+
+  const dayKey = document.getElementById("absentDaySelect").value;
+  const pnums = periodNumsForDay(dayKey);
+
+  const html = teacherOrder.map(key=>{
+    const wasChecked = prevChecked.has(key);
+    const wasFullDay = prevFullDay.hasOwnProperty(key) ? prevFullDay[key] : true;
+
+    // या शिक्षकाला आज (या वारी) प्रत्यक्ष तास असलेले तास-क्रमांक
+    const dp = (teacherData[key].periods[dayKey]) || {};
+    const teachingPnums = pnums.filter(p=> dp[p]);
+
+    const periodsHtml = teachingPnums.map(p=>
+      '<label class="period-check-label"><input type="checkbox" class="periodCb" data-period="'+p+'" checked'+
+      (wasFullDay ? ' disabled' : '')+'> तास '+p+'</label>'
+    ).join("");
+
+    const belowHtml = teachingPnums.length
+      ? '<div class="period-check-row">'+periodsHtml+'</div>'
+      : '<div class="no-period-hint">या शिक्षकाला या वारी कोणताच तास नाही — वाटपाची गरज नाही.</div>';
+
+    return (
+      '<div class="teacher-check-item" data-tkey="'+key+'">'+
+        '<label style="color:#eef1f5;"><input type="checkbox" class="absentCb" value="'+key+'"'+(wasChecked?' checked':'')+'> '+
+          '<span style="color:#eef1f5;">'+teacherData[key].name+'</span>'+
+        '</label>'+
+        '<div class="teacher-leave-detail" style="display:'+(wasChecked ? 'flex' : 'none')+';">'+
+          '<label class="full-day-label"><input type="checkbox" class="fullDayCb"'+(wasFullDay?' checked':'')+'> '+
+            'पूर्ण दिवस गैरहजर (सर्व तास)'+
+          '</label>'+
+          belowHtml+
+        '</div>'+
+      '</div>'
+    );
+  }).join("");
+
+  box.innerHTML = html;
+
+  box.querySelectorAll(".teacher-check-item").forEach(item=>{
+    const mainCb = item.querySelector(".absentCb");
+    const detail = item.querySelector(".teacher-leave-detail");
+    const fullCb = item.querySelector(".fullDayCb");
+    mainCb.addEventListener("change", ()=>{
+      detail.style.display = mainCb.checked ? "flex" : "none";
+    });
+    fullCb.addEventListener("change", ()=>{
+      item.querySelectorAll(".periodCb").forEach(pcb=>{
+        pcb.disabled = fullCb.checked;
+        if(fullCb.checked) pcb.checked = true;
+      });
+    });
+  });
+}
+
+// प्रत्येक टिक केलेल्या शिक्षकासाठी — तो कोणत्या तास-क्रमांकांना गैरहजर आहे याची यादी परत करतो.
+// "पूर्ण दिवस" टिक असल्यास सर्व (त्या वारचे) तास; अन्यथा फक्त निवडलेले ठराविक तास (अर्धा दिवस / २-३ तास इ.)
+function collectAbsentSelections(){
+  const result = {};
+  const dayKey = document.getElementById("absentDaySelect").value;
+  const allPnums = periodNumsForDay(dayKey);
+  document.querySelectorAll("#teacherCheckboxes .teacher-check-item").forEach(item=>{
+    const mainCb = item.querySelector(".absentCb");
+    if(!mainCb || !mainCb.checked) return;
+    const tk = mainCb.value;
+    const fullCb = item.querySelector(".fullDayCb");
+    if(fullCb && fullCb.checked){
+      // "पूर्ण दिवस गैरहजर" म्हणजे शिक्षक त्या दिवशी शाळेतच नाही — त्यामुळे त्याचे स्वतःचे तास तर गैरहजरच,
+      // पण ज्या तासांना त्याचा मुळात वर्गच नाही (मोकळे तास) तेसुद्धा गैरहजर धरायला हवेत — अन्यथा असा शिक्षक
+      // "मोकळा" समजून एक्स्ट्रा (E) ड्युटीसाठी वापरला जातो, जे चुकीचे आहे (गैरहजर शिक्षकाला तास देणे).
+      result[tk] = allPnums.slice();
+    } else {
+      const periods = Array.from(item.querySelectorAll(".periodCb:checked"))
+        .map(pcb=> parseInt(pcb.dataset.period, 10));
+      result[tk] = periods;
+    }
+  });
+  return result;
+}
+
+// शिक्षक (tk) त्या नेमक्या तासाला (pnum) रजेवर/गैरहजर आहे का — absentMap: { teacherKey: [गैरहजर तास-क्रमांकांची यादी] }
+function isAbsentAt(absentMap, tk, pnum){
+  const periods = absentMap && absentMap[tk];
+  return !!periods && periods.includes(pnum);
+}
+
+let lastSubResult = null; // शेवटचे तयार केलेले वाटप — जतन (Save) करण्यासाठी साठवून ठेवतो
+let subOverrides = {};     // rowKey -> वापरकर्त्याने toggle ने निवडलेला शिक्षक-की
+let lastGenParams = null;  // शेवटच्या generate क्लिकचे पॅरामीटर्स (toggle बदलल्यावर पुन्हा वापरण्यासाठी)
+
+function generateSubstitution(){
+  const dayKey = document.getElementById("absentDaySelect").value;
+  const dateVal = document.getElementById("absentDateInput").value;
+  const absentMap = collectAbsentSelections();
+  const checked = Object.keys(absentMap);
+  const sortOpt = document.querySelector('input[name="sortOpt"]:checked').value;
+  const selectedGrades = Array.from(document.querySelectorAll(".mergeGradeCb:checked")).map(cb=>cb.value);
+  const hostSection = document.getElementById("mergeHostSelect").value;
+  const minOffGuarantee = document.getElementById("minOffGuaranteeCb").checked;
+  subOverrides = {}; // नवीन generate केल्यावर आधीचे toggle-बदल रद्द
+  lastGenParams = { dayKey, dateVal, absentMap, checked, sortOpt, selectedGrades, hostSection, minOffGuarantee };
+  runSubstitution();
+}
+
+function onToggleChange(rowKey, newKey){
+  subOverrides[rowKey] = newKey;
+  runSubstitution();
+}
+
+function runSubstitution(){
+  if(!lastGenParams) return;
+  const { dayKey, dateVal, absentMap, checked, sortOpt, selectedGrades, hostSection, minOffGuarantee } = lastGenParams;
+  const monthlyExtraCounts = getMonthlyExtraCounts(dateVal ? monthKeyOf(dateVal) : null, dateVal);
+  const rows = computeSubstitution(dayKey, absentMap, selectedGrades, hostSection, subOverrides, monthlyExtraCounts, minOffGuarantee);
+  lastComputedRows = rows;
+  populateNewttTeacherSelect(dayKey, absentMap);
+  renderNewTimetable();
+  renderSubResults(rows, sortOpt);
+  renderOffSummary(rows.length ? computeOffCounts(dayKey, absentMap, selectedGrades, hostSection, rows) : []);
+  renderDiagnosisBox(rows.length ? computeDiagnosis(dayKey, checked, selectedGrades, minOffGuarantee, rows) : null);
+  renderPeriodRoster(rows.length ? computePeriodRoster(dayKey, rows) : []);
+  renderPeriodSummary(
+    rows.length ? computePeriodSummary(rows) : [],
+    rows.length ? { total: teacherOrder.length, absent: checked.length, present: teacherOrder.length - checked.length } : null
+  );
+
+  const saveRow = document.getElementById("saveRow");
+  const saveMsg = document.getElementById("saveMsg");
+  const pdfMsg = document.getElementById("pdfMsg");
+  saveMsg.textContent = "";
+  if(pdfMsg) pdfMsg.textContent = "";
+  if(rows.length && dateVal){
+    lastSubResult = { date: dateVal, dayKey, absentKeys: checked, absentMap, rows };
+    saveRow.style.display = "";
+  } else {
+    lastSubResult = null;
+    saveRow.style.display = "none";
+  }
+}
+
+function saveCurrentLog(){
+  const saveMsg = document.getElementById("saveMsg");
+  if(!lastSubResult){ return; }
+  let log = {};
+  try{ log = JSON.parse(localStorage.getItem("tas-tracker-monthlylog") || "{}"); }catch(e){ log = {}; }
+  if(log[lastSubResult.date]){
+    const ok = confirm("दिनांक "+lastSubResult.date+" साठी आधीच रेकॉर्ड जतन केलेले आहे. ते बदलायचे (overwrite) का?");
+    if(!ok) return;
+  }
+  log[lastSubResult.date] = lastSubResult;
+  try{
+    localStorage.setItem("tas-tracker-monthlylog", JSON.stringify(log));
+    saveMsg.textContent = "✅ दिनांक "+lastSubResult.date+" चे वाटप जतन झाले.";
+  }catch(e){
+    saveMsg.textContent = "⚠️ जतन करता आले नाही (स्टोरेज त्रुटी).";
+  }
+}
+
+// तारखेवरून वार आपोआप निवडतो (रविवार सुट्टी असल्याने रविवार निवडता येणार नाही)
+function syncDayFromDate(){
+  const dateInput = document.getElementById("absentDateInput");
+  const daySelect = document.getElementById("absentDaySelect");
+  if(!dateInput.value) return;
+  const jsDay = new Date(dateInput.value+"T00:00:00").getDay();
+  if(jsDay === 0){
+    alert("रविवारी शाळेला सुट्टी असते — कृपया दुसरी तारीख निवडा.");
+    return;
+  }
+  daySelect.value = dayKeyMap[jsDay];
+  populateTeacherCheckboxes(); // वार बदलल्यामुळे त्या वारचे तास-क्रमांक पुन्हा दाखवण्यासाठी
+}
+
+function monthKeyOf(dateStr){ return dateStr.slice(0,7); }
+
+// या महिन्यात (excludeDate वगळून, म्हणजे आजचा दिवस अजून जतन झालेला नसल्याने दुबार मोजू नये)
+// आतापर्यंत प्रत्येक शिक्षकाला किती एक्स्ट्रा (⚠️) तास मिळाले आहेत — समानता राखण्यासाठी
+function getMonthlyExtraCounts(monthKey, excludeDate){
+  let log = {};
+  try{ log = JSON.parse(localStorage.getItem("tas-tracker-monthlylog") || "{}"); }catch(e){ log = {}; }
+  const counts = {};
+  teacherOrder.forEach(tk=> counts[tk] = 0);
+  if(!monthKey) return counts;
+  Object.keys(log).forEach(dateStr=>{
+    if(dateStr === excludeDate) return;
+    if(monthKeyOf(dateStr) !== monthKey) return;
+    const entry = log[dateStr];
+    (entry.rows||[]).forEach(r=>{
+      const a = r.arrangement;
+      if(a && isExtraLikeType(a.type) && a.assignedKey && counts[a.assignedKey] !== undefined) counts[a.assignedKey]++;
+    });
+  });
+  return counts;
+}
+
+function buildMonthlyReportRows(monthKey){
+  let log = {};
+  try{ log = JSON.parse(localStorage.getItem("tas-tracker-monthlylog") || "{}"); }catch(e){ log = {}; }
+  const counts = {}; // teacherKey -> {regular, extra, absentDays} — ऑफ तासावर दिलेला तासही (E) अतिरिक्त मध्येच मोजला जातो
+  teacherOrder.forEach(tk=> counts[tk] = {regular:0, extra:0, absentDays:0});
+  Object.keys(log).forEach(dateStr=>{
+    if(monthKeyOf(dateStr) !== monthKey) return;
+    const entry = log[dateStr];
+    (entry.absentKeys||[]).forEach(tk=>{ if(counts[tk]) counts[tk].absentDays++; });
+    (entry.rows||[]).forEach(r=>{
+      const a = r.arrangement;
+      if(!a || !a.assignedKey || !counts[a.assignedKey]) return;
+      if(a.type === "regular") counts[a.assignedKey].regular++;
+      else if(isExtraLikeType(a.type)) counts[a.assignedKey].extra++;
+    });
+  });
+  return teacherOrder
+    .map(tk=> ({ key:tk, name: teacherData[tk].name, ...counts[tk], total: counts[tk].regular+counts[tk].extra }))
+    .filter(r=> r.total>0 || r.absentDays>0)
+    .sort((a,b)=> b.total-a.total || a.name.localeCompare(b.name));
+}
+
+function renderReportTable(rows, monthKey){
+  if(!rows.length){
+    return '<div class="report-empty">या महिन्यात कोणतेही जतन केलेले वाटप-रेकॉर्ड सापडले नाही.</div>';
+  }
+  let html = '<table class="report-table"><thead><tr>'+
+    '<th style="text-align:left;">शिक्षक</th><th>गैरहजर दिवस</th><th>(R) नियमित</th><th>⚠️ एक्स्ट्रा (E)</th><th>एकूण दिलेले तास</th>'+
+    '</tr></thead><tbody>';
+  rows.forEach(r=>{
+    html += '<tr><td class="name-cell">'+r.name+'</td><td>'+r.absentDays+'</td><td>'+r.regular+'</td><td>'+r.extra+'</td><td>'+r.total+'</td></tr>';
+  });
+  html += '</tbody></table>';
+  return html;
+}
+
+function viewMonthlyReport(){
+  const monthInput = document.getElementById("reportMonthInput");
+  const monthKey = monthInput.value;
+  const wrap = document.getElementById("reportTableWrap");
+  const printBtn = document.getElementById("printReportBtn");
+  if(!monthKey){ wrap.innerHTML = '<div class="report-empty">कृपया महिना निवडा.</div>'; printBtn.style.display="none"; return; }
+  const rows = buildMonthlyReportRows(monthKey);
+  wrap.innerHTML = renderReportTable(rows, monthKey);
+  const printArea = document.getElementById("printReportArea");
+  const [y,m] = monthKey.split("-");
+  const monthLabel = ["","जानेवारी","फेब्रुवारी","मार्च","एप्रिल","मे","जून","जुलै","ऑगस्ट","सप्टेंबर","ऑक्टोबर","नोव्हेंबर","डिसेंबर"][parseInt(m,10)] + " " + y;
+  printArea.innerHTML = '<h1>🔔 तासिका सूचक — मासिक तासिका अहवाल</h1><h2>महिना: '+monthLabel+'</h2>' + renderReportTable(rows, monthKey);
+  printBtn.style.display = rows.length ? "" : "none";
+}
+
+function printMonthlyReport(){
+  document.body.classList.add("printing-report");
+  window.print();
+  setTimeout(()=> document.body.classList.remove("printing-report"), 500);
+}
+
+// ---------- गैरहजर वाटप PDF (शिक्षकांच्या ग्रुपवर पाठवण्यासाठी) ----------
+// स्वरूप: वर्ग → तास क्रमांक → शिक्षकाचे नाव → प्रकार (R नियमित / E एक्स्ट्रा)
+function buildSubPdfRows(rows){
+  return rows
+    .filter(r=> r.arrangement && (r.arrangement.assignedKey || r.arrangement.type === "unassigned"))
+    .map(r=> ({
+      cls: r.cls,
+      period: r.period,
+      teacher: r.arrangement.assignedKey ? teacherData[r.arrangement.assignedKey].name : "⚠️ शिक्षक उपलब्ध नाही",
+      type: r.arrangement.assignedKey ? reportLetter(r.arrangement.type) : "❌",
+      unassigned: !r.arrangement.assignedKey
+    }))
+    .sort((a,b)=>{
+      const ga = parseInt(gradeOf(a.cls),10), gb = parseInt(gradeOf(b.cls),10);
+      if(ga !== gb) return ga - gb;
+      if(a.cls !== b.cls) return a.cls.localeCompare(b.cls);
+      return a.period - b.period;
+    });
+}
+
+function downloadSubPDF(){
+  const msgEl = document.getElementById("pdfMsg");
+  if(!lastSubResult){ alert("आधी \"तास वाटप तयार करा\" बटण दाबून वाटप तयार करा."); return; }
+  if(typeof html2canvas === "undefined" || !window.jspdf){
+    msgEl.textContent = "⚠️ PDF सुविधा लोड होऊ शकली नाही — इंटरनेट कनेक्शन तपासा व पुन्हा प्रयत्न करा.";
+    return;
+  }
+  const dayLabelMr = {monday:"सोमवार",tuesday:"मंगळवार",wednesday:"बुधवार",thursday:"गुरुवार",friday:"शुक्रवार",saturday:"शनिवार"};
+  const pdfRows = buildSubPdfRows(lastSubResult.rows);
+  const capture = document.getElementById("pdfCaptureArea");
+
+  let html = '<h1>🔔 तासिका सूचक — आजचे तास वाटप</h1>'+
+    '<h2>दिनांक: '+lastSubResult.date+' ('+(dayLabelMr[lastSubResult.dayKey]||"")+')</h2>';
+  if(!pdfRows.length){
+    html += '<div class="pdf-empty">या दिवसासाठी कोणतेही तास वाटप नाही.</div>';
+  } else {
+    html += '<table><thead><tr><th>वर्ग</th><th>तास क्र.</th><th>शिक्षकाचे नाव</th><th>प्रकार</th></tr></thead><tbody>';
+    pdfRows.forEach(r=>{
+      const rowStyle = r.unassigned ? ' style="background:#ffe0e0; color:#a10000; font-weight:700;"' : '';
+      html += '<tr'+rowStyle+'><td>'+r.cls+'</td><td>'+r.period+'</td><td class="tname-cell">'+r.teacher+'</td><td>'+r.type+'</td></tr>';
+    });
+    html += '</tbody></table><div class="pdf-note">(R) = वर्ग एकत्रीकरणामुळे मोकळा झालेला तास &nbsp;&nbsp; (E) = एक्स्ट्रा/ऑफ तासात दिलेला तास &nbsp;&nbsp; (❌) = शिक्षक उपलब्ध नाही</div>';
+  }
+  capture.innerHTML = html;
+
+  msgEl.textContent = "⏳ PDF तयार होत आहे...";
+
+  // थोडा वेळ थांबून (फॉन्ट/लेआउट नीट render होण्यासाठी) मगच स्क्रीनशॉट घेतो
+  setTimeout(()=>{
+    html2canvas(capture, { scale:2, backgroundColor:"#ffffff", useCORS:true }).then(canvas=>{
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = canvas.height * imgWidth / canvas.width;
+      const imgData = canvas.toDataURL("image/png");
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while(heightLeft > 0){
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save("tas-vatap-"+lastSubResult.date+".pdf");
+      msgEl.textContent = "✅ PDF डाउनलोड झाली — आता ती शिक्षकांच्या ग्रुपवर पाठवता येईल.";
+      capture.innerHTML = "";
+    }).catch(err=>{
+      msgEl.textContent = "⚠️ PDF तयार करताना अडचण आली, कृपया पुन्हा प्रयत्न करा.";
+      capture.innerHTML = "";
+    });
+  }, 60);
+}
+
+// ---------- डेटा रिसेट ----------
+function resetAllData(){
+  const ok = confirm("तुम्ही खात्री करता का? यामुळे तुमचा जतन केलेला मासिक अहवाल (सर्व सेव्ह केलेले तास-वाटप), निवडलेला शिक्षक/वर्ग व मोड — सर्व कायमचे पुसले जाईल. ही क्रिया परत करता येणार नाही.");
+  if(!ok) return;
+  try{
+    localStorage.removeItem("tas-tracker-monthlylog");
+    localStorage.removeItem("tas-tracker-mode");
+    localStorage.removeItem("tas-tracker-teacher-key");
+    localStorage.removeItem("tas-tracker-class-key");
+  }catch(e){}
+  alert("डेटा रिसेट झाला. ॲप पुन्हा सुरू होईल.");
+  location.reload();
+}
+
+let mode = "teacher"; // "teacher", "class" किंवा "absent"
+let currentTeacherKey = teacherOrder[0];
+let currentClassKey = classOrder[0];
+try{
+  const savedMode = localStorage.getItem("tas-tracker-mode");
+  if(savedMode === "class" || savedMode === "teacher" || savedMode === "absent") mode = savedMode;
+  const savedTeacher = localStorage.getItem("tas-tracker-teacher-key");
+  if(savedTeacher && teacherData[savedTeacher]) currentTeacherKey = savedTeacher;
+  const savedClass = localStorage.getItem("tas-tracker-class-key");
+  if(savedClass && classIndex[savedClass]) currentClassKey = savedClass;
+}catch(e){}
+
+// ---------- कधी कधी कार्यक्रमामुळे १ किंवा २ तास वगळले जातात (फक्त आजच्यापुरते — दुसऱ्या दिवशी आपोआप "नियमित" होते) ----------
+function todayDateKey(){
+  const d = new Date();
+  return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+}
+let skipPeriods = 0; // 0 = नियमित (default), 1 = पहिला तास वगळून, 2 = पहिले दोन तास वगळून
+try{
+  const savedSkipDate = localStorage.getItem("tas-tracker-skip-date");
+  const savedSkipCount = localStorage.getItem("tas-tracker-skip-count");
+  if(savedSkipDate === todayDateKey() && (savedSkipCount === "1" || savedSkipCount === "2")){
+    skipPeriods = parseInt(savedSkipCount, 10);
+  }
+}catch(e){}
+
+function setSkipPeriods(n){
+  skipPeriods = n;
+  try{
+    if(n === 0){
+      localStorage.removeItem("tas-tracker-skip-date");
+      localStorage.removeItem("tas-tracker-skip-count");
+    } else {
+      localStorage.setItem("tas-tracker-skip-date", todayDateKey());
+      localStorage.setItem("tas-tracker-skip-count", String(n));
+    }
+  }catch(e){}
+  refreshView();
+}
+
+// दिलेल्या दिवसाच्या वेळापत्रकातून सुरुवातीचे वगळलेले तास (num <= skipPeriods) काढून टाकते;
+// उरलेल्या तासांच्या वेळा (क्लॉक टाईम) जशाच्या तशाच राहतात, पण त्यात दाखवला जाणारा विषय एका तासाने पुढे सरकतो —
+// उदा. १ तास वगळला असेल तर दुसऱ्या तासाच्या वेळेस पहिल्या तासाचा विषय, तिसऱ्याच्या वेळेस दुसऱ्याचा... आणि शेवटच्या
+// (उदा. आठव्या) तासाच्या वेळेस सातव्या तासाचा विषय दाखवला जातो; मूळ शेवटचा विषय आज होतच नाही.
+function applySkip(schedule){
+  if(!schedule || !skipPeriods) return schedule;
+  return schedule
+    .filter(s => !(s.type === "period" && s.num <= skipPeriods))
+    .map(s => s.type === "period" ? Object.assign({}, s, {lookupNum: s.num - skipPeriods}) : s);
+}
+
+function currentPeriodsForDay(dayKey){
+  if(mode === "class"){
+    return (classIndex[currentClassKey] && classIndex[currentClassKey][dayKey]) || {};
+  }
+  return (teacherData[currentTeacherKey].periods[dayKey]) || {};
+}
+
+function populateTeacherSelect(){
+  const sel = document.getElementById("teacherSelect");
+  sel.innerHTML = "";
+  teacherOrder.forEach(key=>{
+    const opt = document.createElement("option");
+    opt.value = key;
+    opt.textContent = teacherData[key].name;
+    sel.appendChild(opt);
+  });
+  sel.value = currentTeacherKey;
+}
+
+function populateClassSelect(){
+  const sel = document.getElementById("classSelect");
+  sel.innerHTML = "";
+  classOrder.forEach(cls=>{
+    const opt = document.createElement("option");
+    opt.value = cls;
+    opt.textContent = "वर्ग " + cls;
+    sel.appendChild(opt);
+  });
+  sel.value = currentClassKey;
+}
+
+function updateSubHeading(){
+  const subEl = document.getElementById("teacherSub");
+  if(mode === "class"){
+    subEl.textContent = "वर्ग " + currentClassKey + " — कोणत्या तासाला कोणते शिक्षक";
+  } else {
+    subEl.textContent = teacherData[currentTeacherKey].name + " — शिक्षक वेळापत्रक";
+  }
+}
+
+function refreshView(){
+  buildDayRows.lastDay = null;
+  lastStatusKey = null;
+  tick();
+}
+
+function switchTeacher(key){
+  if(!teacherData[key]) return;
+  currentTeacherKey = key;
+  try{ localStorage.setItem("tas-tracker-teacher-key", key); }catch(e){}
+  updateSubHeading();
+  refreshView();
+}
+
+function switchClass(key){
+  if(!classIndex[key]) return;
+  currentClassKey = key;
+  try{ localStorage.setItem("tas-tracker-class-key", key); }catch(e){}
+  updateSubHeading();
+  refreshView();
+}
+
+function switchMode(newMode){
+  if(mode === newMode) return;
+  mode = newMode;
+  try{ localStorage.setItem("tas-tracker-mode", mode); }catch(e){}
+  document.getElementById("modeTeacherBtn").classList.toggle("active", mode==="teacher");
+  document.getElementById("modeClassBtn").classList.toggle("active", mode==="class");
+  document.getElementById("modeAbsentBtn").classList.toggle("active", mode==="absent");
+  document.getElementById("teacherPicker").style.display = mode==="teacher" ? "" : "none";
+  document.getElementById("classPicker").style.display = mode==="class" ? "" : "none";
+
+  const isAbsent = mode === "absent";
+  document.getElementById("statusCard").style.display = isAbsent ? "none" : "";
+  document.querySelector(".notif-box").style.display = isAbsent ? "none" : "";
+  document.querySelector(".day-table").style.display = isAbsent ? "none" : "";
+  document.getElementById("absentPanel").style.display = isAbsent ? "" : "none";
+
+  if(isAbsent){
+    document.getElementById("teacherSub").textContent = "गैरहजर शिक्षकांच्या तासांचे वाटप ठरवा";
+  } else {
+    updateSubHeading();
+  }
+  refreshView();
+}
+
+const dayNamesMr = ["रविवार","सोमवार","मंगळवार","बुधवार","गुरुवार","शुक्रवार","शनिवार"];
+const dayKeyMap = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+
+function getScheduleForDay(jsDay){
+  if(jsDay===0) return null;
+  if(jsDay===6) return daySchedules.saturday;
+  if(jsDay===5) return daySchedules.friday;
+  return daySchedules.monThu;
+}
+
+function toSeconds(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  return h*3600+m*60;
+}
+
+function fmt12(hhmm){
+  const [h,m] = hhmm.split(":").map(Number);
+  const period = h>=12 ? "PM":"AM";
+  let h12 = h%12; if(h12===0) h12=12;
+  return h12+":"+String(m).padStart(2,"0")+" "+period;
+}
+
+function fmtCountdown(totalSeconds){
+  const m = Math.floor(totalSeconds/60);
+  const s = totalSeconds%60;
+  return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0");
+}
+
+function infoLabel(info){
+  // teacher mode: info = {c, s} → वर्ग व विषय
+  // class mode: info = {t, s} → शिक्षक व विषय
+  if(mode === "class") return info.t + " (" + info.s + ")";
+  return "वर्ग " + info.c + " (" + info.s + ")";
+}
+
+function infoTag(info){
+  if(mode === "class") return info.t + " · " + info.s;
+  return "वर्ग " + info.c + " · " + info.s;
+}
+
+function slotLabel(dayKey, slot){
+  if(!slot) return null;
+  if(slot.type === "prayer") return "🙏 प्रार्थना";
+  if(slot.type === "break") return "☕ "+slot.label;
+  if(slot.type === "duty") return "🚪 "+slot.label;
+  const info = currentPeriodsForDay(dayKey)[slot.lookupNum || slot.num];
+  return info ? infoLabel(info) : "ऑफ पिरियड";
+}
+
+let lastStatusKey = null;
+let notifPermission = (typeof Notification !== "undefined") ? Notification.permission : "unsupported";
+let swRegistration = null;
+
+try{
+  if(location.protocol === "file:"){
+    document.getElementById("fileWarning").style.display = "block";
+  }
+}catch(e){}
+
+try{
+  if("serviceWorker" in navigator && location.protocol !== "file:"){
+    navigator.serviceWorker.register("sw.js").then(reg=>{ swRegistration = reg; }).catch(()=>{});
+  }
+}catch(e){}
+
+function requestNotifPermission(){
+  if(typeof Notification === "undefined"){
+    document.getElementById("notifMsg").textContent = "या ब्राउझर/ॲपमध्ये नोटिफिकेशन सुविधा उपलब्ध नाही.";
+    return;
+  }
+  if(location.protocol === "file:"){
+    document.getElementById("notifMsg").textContent = "आधी वरील सूचनेप्रमाणे ही फाईल इंटरनेटवर होस्ट करा, मगच नोटिफिकेशन काम करेल.";
+    return;
+  }
+  Notification.requestPermission().then(p=>{
+    notifPermission = p;
+    updateNotifUI();
+    if(p==="granted"){
+      sendNotification("सूचना सुरू झाली ✅", "आता तास सुरू झाल्यावर तुम्हाला कळेल.");
+    }
+  });
+}
+
+function updateNotifUI(){
+  const btn = document.getElementById("enableBtn");
+  const msg = document.getElementById("notifMsg");
+  if(notifPermission === "granted"){
+    btn.disabled = true;
+    btn.textContent = "✅ सूचना सुरू आहे";
+    msg.textContent = "तास बदलल्यावर तुम्हाला नोटिफिकेशन व व्हायब्रेशन मिळेल (हे पेज उघडे असताना).";
+  } else if(notifPermission === "denied"){
+    btn.disabled = true;
+    btn.textContent = "🔕 परवानगी नाकारली";
+    msg.textContent = "ब्राउझर सेटिंगमधून या साईटसाठी नोटिफिकेशन परवानगी सुरू करा.";
+  }
+}
+
+function sendNotification(title, body){
+  if(notifPermission !== "granted") return;
+  if(swRegistration && swRegistration.showNotification){
+    swRegistration.showNotification(title, {
+      body: body || "", icon: "icon-192.png", badge: "icon-192.png",
+      vibrate: [300,150,300], tag: "tas-tracker", renotify: true
+    });
+  } else {
+    try{ new Notification(title, {body: body}); }catch(e){}
+    if(navigator.vibrate){ navigator.vibrate([300,150,300]); }
+  }
+}
+
+function buildDayRows(dayKey, schedule){
+  const rowsEl = document.getElementById("rows");
+  rowsEl.innerHTML = "";
+  if(!schedule){
+    rowsEl.innerHTML = '<div class="row"><div class="label">आज शाळेला सुट्टी आहे 🎉</div></div>';
+    return;
+  }
+  const periodsMap = currentPeriodsForDay(dayKey);
+  schedule.forEach(slot=>{
+    const row = document.createElement("div");
+    row.className = "row";
+    row.dataset.start = slot.start;
+    row.dataset.end = slot.end;
+    const timeDiv = document.createElement("div");
+    timeDiv.className = "time";
+    timeDiv.textContent = fmt12(slot.start)+" - "+fmt12(slot.end);
+    row.appendChild(timeDiv);
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "label";
+    if(slot.type === "prayer"){
+      labelDiv.textContent = "🙏 "+slot.label;
+      row.classList.add("prayer");
+    } else if(slot.type === "break"){
+      labelDiv.textContent = "☕ "+slot.label;
+      row.classList.add("break");
+    } else if(slot.type === "duty"){
+      labelDiv.textContent = "🚪 "+slot.label;
+      row.classList.add("duty");
+    } else {
+      const info = periodsMap[slot.lookupNum || slot.num];
+      if(info){
+        labelDiv.innerHTML = "तास "+slot.num;
+        const tag = document.createElement("span");
+        tag.className = "class-tag";
+        tag.textContent = infoTag(info);
+        row.appendChild(labelDiv);
+        row.appendChild(tag);
+        rowsEl.appendChild(row);
+        return;
+      } else {
+        labelDiv.textContent = "तास "+slot.num+" — ऑफ पिरियड";
+      }
+    }
+    row.appendChild(labelDiv);
+    rowsEl.appendChild(row);
+  });
+}
+
+function tick(){
+  const now = new Date();
+  const jsDay = now.getDay();
+  const nowSec = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+
+  document.getElementById("dayName").textContent = dayNamesMr[jsDay];
+  document.getElementById("clockTime").textContent = now.toLocaleTimeString('en-IN',{hour12:true});
+
+  if(mode === "absent") return;
+
+  let schedule = getScheduleForDay(jsDay);
+  if(schedule) schedule = applySkip(schedule);
+  const dayKey = dayKeyMap[jsDay];
+  const card = document.getElementById("statusCard");
+  const tag = document.getElementById("statusTag");
+  const main = document.getElementById("statusMain");
+  const detail = document.getElementById("statusDetail");
+  const timeEl = document.getElementById("statusTime");
+  const countdownEl = document.getElementById("countdown");
+  const nextStripEl = document.getElementById("nextStrip");
+
+  card.className = "status-card";
+
+  if(!schedule){
+    card.classList.add("holiday");
+    tag.textContent = "सुट्टी";
+    main.textContent = "🎉 आज शाळेला सुट्टी";
+    detail.textContent = "";
+    timeEl.textContent = "";
+    countdownEl.textContent = "";
+    nextStripEl.textContent = "";
+    lastStatusKey = "holiday";
+    return;
+  }
+
+  let currentSlot = null, nextSlot = null;
+  for(let i=0;i<schedule.length;i++){
+    const s = schedule[i];
+    const startSec = toSeconds(s.start);
+    const endSec = toSeconds(s.end);
+    if(nowSec>=startSec && nowSec<endSec){ currentSlot = s; nextSlot = schedule[i+1] || null; break; }
+    if(nowSec < startSec){ nextSlot = s; break; }
+  }
+
+  let statusKey;
+  const periodsMap = currentPeriodsForDay(dayKey);
+
+  if(!currentSlot){
+    const firstStart = toSeconds(schedule[0].start);
+    if(nowSec < firstStart){
+      card.classList.add("off");
+      tag.textContent = "शाळा सुरू होण्यापूर्वी";
+      main.textContent = "⏳ शाळा लवकरच सुरू होईल";
+      detail.textContent = "प्रार्थना "+fmt12(schedule[0].start)+" वाजता";
+      statusKey = "before-school";
+      countdownEl.textContent = fmtCountdown(firstStart - nowSec)+" मध्ये सुरू";
+    } else {
+      card.classList.add("off");
+      tag.textContent = "शाळा संपली";
+      main.textContent = "🏠 आजचे तास संपले";
+      detail.textContent = "";
+      statusKey = "after-school";
+      countdownEl.textContent = "";
+    }
+    timeEl.textContent = "";
+    nextStripEl.textContent = "";
+  } else {
+    if(currentSlot.type === "prayer"){
+      card.classList.add("off");
+      tag.textContent = "सध्या";
+      main.textContent = "🙏 प्रार्थना सुरू आहे";
+      detail.textContent = "";
+      statusKey = "prayer";
+    } else if(currentSlot.type === "break"){
+      card.classList.add("break");
+      tag.textContent = "सध्या";
+      main.textContent = "☕ "+currentSlot.label;
+      detail.textContent = "";
+      statusKey = "break-"+currentSlot.start;
+    } else if(currentSlot.type === "duty"){
+      card.classList.add("duty");
+      tag.textContent = "सध्या";
+      main.textContent = "🚪 गेट ड्युटी";
+      detail.textContent = currentSlot.label;
+      statusKey = "duty-"+currentSlot.start;
+    } else {
+      const info = periodsMap[currentSlot.lookupNum || currentSlot.num];
+      const selKey = mode==="class" ? currentClassKey : currentTeacherKey;
+      if(info){
+        card.classList.add("in-class");
+        tag.textContent = "तास "+currentSlot.num+" सुरू आहे";
+        main.textContent = "📘 "+infoTag(info);
+        detail.textContent = "";
+        statusKey = "period-"+mode+"-"+selKey+"-"+dayKey+"-"+currentSlot.num;
+      } else {
+        card.classList.add("off");
+        tag.textContent = "तास "+currentSlot.num;
+        main.textContent = "😌 ऑफ पिरियड";
+        detail.textContent = mode==="class" ? "या तासाला माहिती उपलब्ध नाही" : "या तासाला वर्ग नाही";
+        statusKey = "off-"+mode+"-"+selKey+"-"+dayKey+"-"+currentSlot.num;
+      }
+    }
+    timeEl.textContent = fmt12(currentSlot.start)+" - "+fmt12(currentSlot.end);
+    countdownEl.textContent = fmtCountdown(toSeconds(currentSlot.end)-nowSec)+" शिल्लक";
+
+    const nl = slotLabel(dayKey, nextSlot);
+    nextStripEl.innerHTML = nextSlot
+      ? '<span class="arrow">➡</span> पुढे ('+fmt12(nextSlot.start)+'): '+nl
+      : 'पुढे: आजचे तास संपतील';
+  }
+
+  if(statusKey !== lastStatusKey){
+    lastStatusKey = statusKey;
+    if(statusKey.startsWith("period-")){
+      const info = periodsMap[currentSlot.lookupNum || currentSlot.num];
+      const title = mode==="class" ? ("तास सुरू झाला — "+info.t) : ("तास सुरू झाला — वर्ग "+info.c);
+      sendNotification(title, "विषय: "+info.s+" | वेळ: "+fmt12(currentSlot.start)+"-"+fmt12(currentSlot.end));
+    } else if(statusKey.startsWith("off-")){
+      sendNotification("ऑफ पिरियड सुरू", "तास "+currentSlot.num+" — "+(mode==="class" ? "या तासाला माहिती उपलब्ध नाही." : "या तासाला तुमचा वर्ग नाही."));
+    } else if(statusKey.startsWith("duty-")){
+      sendNotification("🚪 गेट ड्युटी सुरू", currentSlot.label+" | शाळेच्या गेटवर उपस्थित राहा.");
+    } else if(statusKey.startsWith("break-")){
+      sendNotification(currentSlot.label+" सुरू", fmt12(currentSlot.start)+" - "+fmt12(currentSlot.end));
+    } else if(statusKey === "prayer"){
+      sendNotification("प्रार्थना सुरू", "");
+    } else if(statusKey === "after-school"){
+      sendNotification("आजचे तास संपले 🏠", "");
+    }
+  }
+
+  const viewKey = dayKey+"-"+mode+"-"+(mode==="class" ? currentClassKey : currentTeacherKey);
+  if(buildDayRows.lastDay !== viewKey){
+    buildDayRows(dayKey, schedule);
+    buildDayRows.lastDay = viewKey;
+  }
+  highlightCurrentRow(currentSlot);
+}
+
+function highlightCurrentRow(currentSlot){
+  document.querySelectorAll("#rows .row").forEach(r=>{
+    if(currentSlot && r.dataset.start === currentSlot.start && r.dataset.end === currentSlot.end){
+      r.classList.add("current");
+    } else {
+      r.classList.remove("current");
+    }
+  });
+}
+
+document.getElementById("enableBtn").addEventListener("click", requestNotifPermission);
+document.getElementById("teacherSelect").addEventListener("change", (e)=> switchTeacher(e.target.value));
+document.getElementById("classSelect").addEventListener("change", (e)=> switchClass(e.target.value));
+document.getElementById("modeTeacherBtn").addEventListener("click", ()=> switchMode("teacher"));
+document.getElementById("modeClassBtn").addEventListener("click", ()=> switchMode("class"));
+document.getElementById("modeAbsentBtn").addEventListener("click", ()=> switchMode("absent"));
+document.getElementById("generateSubBtn").addEventListener("click", generateSubstitution);
+document.getElementById("absentDateInput").addEventListener("change", syncDayFromDate);
+document.getElementById("absentDaySelect").addEventListener("change", populateTeacherCheckboxes);
+document.getElementById("saveLogBtn").addEventListener("click", saveCurrentLog);
+document.getElementById("viewReportBtn").addEventListener("click", viewMonthlyReport);
+document.getElementById("printReportBtn").addEventListener("click", printMonthlyReport);
+document.getElementById("printSubBtn").addEventListener("click", downloadSubPDF);
+document.getElementById("resetDataBtn").addEventListener("click", resetAllData);
+
+document.querySelectorAll('input[name="skipOpt"]').forEach(r=>{
+  r.checked = (parseInt(r.value,10) === skipPeriods);
+  r.addEventListener("change", (e)=>{ if(e.target.checked) setSkipPeriods(parseInt(e.target.value,10)); });
+});
+
+populateTeacherSelect();
+populateClassSelect();
+populateNewttClassSelect();
+populateNewttTeacherSelect(null, {});
+
+document.querySelectorAll('input[name="newttMode"]').forEach(r=>{
+  r.addEventListener("change", renderNewTimetable);
+});
+document.getElementById("newttClassSelect").addEventListener("change", renderNewTimetable);
+document.getElementById("newttTeacherSelect").addEventListener("change", renderNewTimetable);
+
+(function setDefaultAbsentDay(){
+  const now = new Date();
+  const jsDay = now.getDay();
+  const todayKey = dayKeyMap[jsDay];
+  const sel = document.getElementById("absentDaySelect");
+  sel.value = (todayKey === "sunday") ? "monday" : todayKey;
+
+  const pad = n => String(n).padStart(2,"0");
+  const isoDate = now.getFullYear()+"-"+pad(now.getMonth()+1)+"-"+pad(now.getDate());
+  document.getElementById("absentDateInput").value = isoDate;
+  document.getElementById("reportMonthInput").value = now.getFullYear()+"-"+pad(now.getMonth()+1);
+})();
+
+populateTeacherCheckboxes(); // वार व तारीख निश्चित झाल्यावरच त्या वारचे तास-क्रमांक दाखवण्यासाठी
+
+document.getElementById("modeTeacherBtn").classList.toggle("active", mode==="teacher");
+document.getElementById("modeClassBtn").classList.toggle("active", mode==="class");
+document.getElementById("modeAbsentBtn").classList.toggle("active", mode==="absent");
+document.getElementById("teacherPicker").style.display = mode==="teacher" ? "" : "none";
+document.getElementById("classPicker").style.display = mode==="class" ? "" : "none";
+{
+  const isAbsent = mode === "absent";
+  document.getElementById("statusCard").style.display = isAbsent ? "none" : "";
+  document.querySelector(".notif-box").style.display = isAbsent ? "none" : "";
+  document.querySelector(".day-table").style.display = isAbsent ? "none" : "";
+  document.getElementById("absentPanel").style.display = isAbsent ? "" : "none";
+  if(isAbsent){
+    document.getElementById("teacherSub").textContent = "गैरहजर शिक्षकांच्या तासांचे वाटप ठरवा";
+  } else {
+    updateSubHeading();
+  }
+}
+
+updateNotifUI();
+renderSubResults([], "period");
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
